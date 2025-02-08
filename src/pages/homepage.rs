@@ -1,42 +1,38 @@
-use crate::app::{App, Page};
+use crate::{
+    app::{App, Page},
+    tui,
+};
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
-    layout::{Margin, Rect},
-    style::Stylize,
+    layout::{Alignment, Constraint},
+    style::{Color, Style, Stylize},
     text::Line,
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph},
     Frame,
 };
 use std::fmt::Display;
-use strum::{EnumIter, IntoEnumIterator};
+use strum::{EnumCount, EnumIter, IntoEnumIterator};
 
 pub fn render(app: &mut App, frame: &mut Frame) {
     let page_data = PageData::extract(&app.current_page).unwrap();
-    let frame_area = frame.area();
 
     let block = Block::default()
-        .title("kana-tui")
+        .title(" kana-tui ")
+        .title_alignment(Alignment::Center)
+        .title_style(Style::default().bold().fg(Color::Red))
         .borders(Borders::all())
-        .title_alignment(ratatui::layout::Alignment::Center);
-    let menu = MenuOption::render_paragraph(&page_data.current_option);
+        .border_type(BorderType::Thick)
+        .border_style(Style::default().fg(Color::DarkGray));
 
-    let width = 55;
-    let height = 30;
-    let area = Rect {
-        x: frame_area.width.saturating_sub(width) / 2,
-        y: frame_area.height.saturating_sub(height) / 2,
-        width,
-        height,
-    };
+    frame.render_widget(block, frame.area());
 
-    frame.render_widget(block, area);
-    frame.render_widget(
-        menu,
-        area.inner(Margin {
-            vertical: 4,
-            horizontal: 12,
-        }),
+    let menu = MenuOption::render(&page_data.current_option).centered();
+    let area = tui::center(
+        frame.area(),
+        Constraint::Length(MenuOption::get_max_width()),
+        Constraint::Length(MenuOption::get_max_height()),
     );
+    frame.render_widget(menu, area);
 }
 
 pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
@@ -84,7 +80,7 @@ impl PageData {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq, EnumIter)]
+#[derive(Debug, Clone, Default, PartialEq, EnumIter, EnumCount)]
 pub enum MenuOption {
     #[default]
     Start,
@@ -92,20 +88,31 @@ pub enum MenuOption {
 }
 
 impl MenuOption {
-    fn render_paragraph(current_option: &MenuOption) -> Paragraph {
-        let options: Vec<Line> = MenuOption::iter()
-            .map(|option| {
-                let mut l = if option.eq(current_option) {
-                    Line::from("> ").underlined()
-                } else {
-                    Line::from("  ")
-                };
-                l.push_span(option.to_string());
-
-                l
-            })
-            .collect();
+    fn render(current_option: &MenuOption) -> Paragraph {
+        let mut options: Vec<Line> = Vec::new();
+        for (i, option) in MenuOption::iter().enumerate() {
+            let l = if option.eq(current_option) {
+                Line::from(option.to_string()).bold()
+            } else {
+                Line::from(option.to_string())
+            };
+            options.push(l);
+            if i < MenuOption::COUNT - 1 {
+                options.push(Line::from(""));
+            }
+        }
         Paragraph::new(options)
+    }
+
+    fn get_max_width() -> u16 {
+        MenuOption::iter()
+            .map(|o| o.to_string().len())
+            .max()
+            .unwrap_or(0) as u16
+    }
+
+    fn get_max_height() -> u16 {
+        (MenuOption::COUNT as u16) * 2 - 1
     }
 }
 

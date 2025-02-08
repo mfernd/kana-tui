@@ -4,6 +4,7 @@ use crate::{pages, AppResult};
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use ratatui::backend::Backend;
+use ratatui::layout::{Constraint, Flex, Layout, Rect};
 use ratatui::Terminal;
 use std::io;
 use std::panic;
@@ -73,4 +74,12 @@ impl<B: Backend> Tui<B> {
         self.terminal.show_cursor()?;
         Ok(())
     }
+}
+
+pub fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
+    let [area] = Layout::horizontal([horizontal])
+        .flex(Flex::Center)
+        .areas(area);
+    let [area] = Layout::vertical([vertical]).flex(Flex::Center).areas(area);
+    area
 }
