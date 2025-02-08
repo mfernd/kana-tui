@@ -95,10 +95,12 @@ impl MenuOption {
     fn render_paragraph(current_option: &MenuOption) -> Paragraph {
         let options: Vec<Line> = MenuOption::iter()
             .map(|option| {
-                let mut l = Line::from(option.to_string());
-                if option.eq(current_option) {
-                    l = l.underlined();
-                }
+                let mut l = if option.eq(current_option) {
+                    Line::from("> ").underlined()
+                } else {
+                    Line::from("  ")
+                };
+                l.push_span(option.to_string());
 
                 l
             })
