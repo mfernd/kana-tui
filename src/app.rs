@@ -1,20 +1,16 @@
-use crate::study::{create_study_plan, kana::Kana};
-use std::error;
-
-pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
+use crate::pages::homepage;
 
 #[derive(Debug)]
 pub struct App {
     pub running: bool,
-    /// counter
-    pub study_plan: Vec<Kana>,
+    pub current_page: Page,
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            study_plan: create_study_plan(),
+            current_page: Page::Homepage(homepage::PageData::default()),
         }
     }
 }
@@ -31,4 +27,18 @@ impl App {
     pub fn quit(&mut self) {
         self.running = false;
     }
+
+    pub fn go_to_homepage(&mut self, page_data: homepage::PageData) {
+        self.current_page = Page::Homepage(page_data)
+    }
+
+    pub fn go_to_study_page(&mut self) {
+        self.current_page = Page::StudyPage
+    }
+}
+
+#[derive(Debug)]
+pub enum Page {
+    Homepage(homepage::PageData),
+    StudyPage,
 }
