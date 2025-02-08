@@ -1,0 +1,15 @@
+[package]
+name = "kana-tui"
+version = "0.1.0"
+authors = ["Matéo Fernandez"]
+license = "MIT"
+edition = "2021"
+
+[dependencies]
+crossterm = { version = "0.28", features = ["event-stream"] }
+futures = "0.3"
+rand = { version = "0.9", features = ["small_rng"] }
+ratatui = "0.29"
+strum = "0.26"
+strum_macros = "0.26"
+tokio = { version = "1", features = ["full"] }
