@@ -1,4 +1,4 @@
-use crate::study::{create_full_study_plan, kana::Kana};
+use crate::study::{create_study_plan, kana::Kana};
 use std::error;
 
 pub type AppResult<T> = std::result::Result<T, Box<dyn error::Error>>;
@@ -14,7 +14,7 @@ impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            study_plan: create_full_study_plan(),
+            study_plan: create_study_plan(),
         }
     }
 }
