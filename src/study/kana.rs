@@ -1,6 +1,13 @@
 use strum::EnumIter;
 
-#[derive(Debug, EnumIter)]
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub enum KanaRepresentation {
+    Hiragana,
+    Katakana,
+}
+
+#[derive(Debug, Clone, EnumIter)]
 pub enum Kana {
     N,
     // ∅
@@ -91,86 +98,6 @@ pub enum Kana {
     Po,
 }
 
-impl super::ValidateGuess for Kana {
-    fn validate_guess(&self, guess: &str) -> bool {
-        matches!(
-            (self, guess),
-            (Self::N, "n")
-                | (Self::A, "a")
-                | (Self::I, "i")
-                | (Self::U, "u")
-                | (Self::E, "e")
-                | (Self::O, "o")
-                | (Self::Ka, "ka")
-                | (Self::Ki, "ki")
-                | (Self::Ku, "ku")
-                | (Self::Ke, "ke")
-                | (Self::Ko, "ko")
-                | (Self::Sa, "sa")
-                | (Self::Shi, "shi")
-                | (Self::Su, "su")
-                | (Self::Se, "se")
-                | (Self::So, "so")
-                | (Self::Ta, "ta")
-                | (Self::Chi, "chi" | "tchi")
-                | (Self::Tsu, "tsu")
-                | (Self::Te, "te")
-                | (Self::To, "to")
-                | (Self::Na, "na")
-                | (Self::Ni, "ni")
-                | (Self::Nu, "nu")
-                | (Self::Ne, "ne")
-                | (Self::No, "no")
-                | (Self::Ha, "ha")
-                | (Self::Hi, "hi")
-                | (Self::Fu, "fu")
-                | (Self::He, "he")
-                | (Self::Ho, "ho")
-                | (Self::Ma, "ma")
-                | (Self::Mi, "mi")
-                | (Self::Mu, "mu")
-                | (Self::Me, "me")
-                | (Self::Mo, "mo")
-                | (Self::Ya, "ya")
-                | (Self::Yu, "yu")
-                | (Self::Yo, "yo")
-                | (Self::Ra, "ra")
-                | (Self::Ri, "ri")
-                | (Self::Ru, "ru")
-                | (Self::Re, "re")
-                | (Self::Ro, "ro")
-                | (Self::Wa, "wa")
-                | (Self::Wo, "wo")
-                | (Self::Ga, "ga")
-                | (Self::Gi, "gi")
-                | (Self::Gu, "gu")
-                | (Self::Ge, "ge")
-                | (Self::Go, "go")
-                | (Self::Za, "za")
-                | (Self::Ji, "ji")
-                | (Self::Zu, "zu")
-                | (Self::Ze, "ze")
-                | (Self::Zo, "zo")
-                | (Self::Da, "da")
-                | (Self::Dji, "dji" | "ji")
-                | (Self::Dzu, "dzu")
-                | (Self::De, "de")
-                | (Self::Do, "do")
-                | (Self::Ba, "ba")
-                | (Self::Bi, "bi")
-                | (Self::Bu, "bu")
-                | (Self::Be, "be")
-                | (Self::Bo, "bo")
-                | (Self::Pa, "pa")
-                | (Self::Pi, "pi")
-                | (Self::Pu, "pu")
-                | (Self::Pe, "pe")
-                | (Self::Po, "po")
-        )
-    }
-}
-
-#[allow(dead_code)]
 impl Kana {
     pub fn to_hiragana(&self) -> &str {
         match self {
@@ -324,5 +251,109 @@ impl Kana {
             Self::Pe => "ペ",
             Self::Po => "ポ",
         }
+    }
+}
+
+impl std::fmt::Display for Kana {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value = match self {
+            Kana::N => "n",
+            Kana::A => "a",
+            Kana::I => "i",
+            Kana::U => "u",
+            Kana::E => "e",
+            Kana::O => "o",
+            Kana::Ka => "ka",
+            Kana::Ki => "ki",
+            Kana::Ku => "ku",
+            Kana::Ke => "ke",
+            Kana::Ko => "ko",
+            Kana::Sa => "sa",
+            Kana::Shi => "shi",
+            Kana::Su => "su",
+            Kana::Se => "se",
+            Kana::So => "so",
+            Kana::Ta => "ta",
+            Kana::Chi => "tchi",
+            Kana::Tsu => "tsu",
+            Kana::Te => "te",
+            Kana::To => "to",
+            Kana::Na => "na",
+            Kana::Ni => "ni",
+            Kana::Nu => "nu",
+            Kana::Ne => "ne",
+            Kana::No => "no",
+            Kana::Ha => "ha",
+            Kana::Hi => "hi",
+            Kana::Fu => "fu",
+            Kana::He => "he",
+            Kana::Ho => "ho",
+            Kana::Ma => "ma",
+            Kana::Mi => "mi",
+            Kana::Mu => "mu",
+            Kana::Me => "me",
+            Kana::Mo => "mo",
+            Kana::Ya => "ya",
+            Kana::Yu => "yu",
+            Kana::Yo => "yo",
+            Kana::Ra => "ra",
+            Kana::Ri => "ri",
+            Kana::Ru => "ru",
+            Kana::Re => "re",
+            Kana::Ro => "ro",
+            Kana::Wa => "wa",
+            Kana::Wo => "wo",
+            Kana::Ga => "ga",
+            Kana::Gi => "gi",
+            Kana::Gu => "gu",
+            Kana::Ge => "ge",
+            Kana::Go => "go",
+            Kana::Za => "za",
+            Kana::Ji => "ji",
+            Kana::Zu => "zu",
+            Kana::Ze => "ze",
+            Kana::Zo => "zo",
+            Kana::Da => "da",
+            Kana::Dji => "dji",
+            Kana::Dzu => "dzu",
+            Kana::De => "de",
+            Kana::Do => "do",
+            Kana::Ba => "ba",
+            Kana::Bi => "bi",
+            Kana::Bu => "bu",
+            Kana::Be => "be",
+            Kana::Bo => "bo",
+            Kana::Pa => "pa",
+            Kana::Pi => "pi",
+            Kana::Pu => "pu",
+            Kana::Pe => "pe",
+            Kana::Po => "po",
+        };
+        write!(f, "{}", value)
+    }
+}
+
+impl super::ValidateGuess for Kana {
+    fn validate_guess(&self, guess: &str) -> bool {
+        match (self, guess) {
+            // allow some flexibility
+            (Self::Chi, "chi" | "tchi") => true,
+            (Self::Dji, "dji" | "ji") => true,
+            // same as Display
+            (kana, guess) => kana.to_string() == guess,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::study::ValidateGuess;
+
+    #[test]
+    fn validate_guess_multiple() {
+        assert!(Kana::A.validate_guess("a"));
+        assert!(Kana::Chi.validate_guess("chi") && Kana::Chi.validate_guess("tchi"));
+        assert!(Kana::Dji.validate_guess("dji") && Kana::Dji.validate_guess("ji"));
     }
 }
