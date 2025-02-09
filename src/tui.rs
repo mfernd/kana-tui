@@ -4,8 +4,10 @@ use crate::{pages, AppResult};
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use ratatui::backend::Backend;
-use ratatui::layout::{Constraint, Flex, Layout, Rect};
-use ratatui::Terminal;
+use ratatui::layout::{Alignment, Constraint, Flex, Layout, Margin, Rect};
+use ratatui::style::{Color, Style, Stylize};
+use ratatui::widgets::{Block, BorderType, Borders};
+use ratatui::{Frame, Terminal};
 use std::io;
 use std::panic;
 
@@ -49,9 +51,15 @@ impl<B: Backend> Tui<B> {
     /// Draw the terminal interface by [`rendering`] the widgets.
     /// Corresponding to each page render function.
     pub fn draw(&mut self, app: &mut App) -> AppResult<()> {
-        self.terminal.draw(|frame| match app.current_page {
-            Page::Homepage(_) => pages::homepage::render(app, frame),
-            Page::StudyPage => pages::study_page::render(app, frame),
+        self.terminal.draw(|frame| {
+            let main_area = center(frame.area(), Constraint::Max(50), Constraint::Max(30));
+            render_header_block(frame, main_area);
+            // to prevent overlap with the header block
+            let inner_main_area = main_area.inner(Margin::new(1, 1));
+            match app.current_page {
+                Page::Homepage(_) => pages::homepage::render(app, frame, inner_main_area),
+                Page::StudyPage => pages::study_page::render(app, frame, inner_main_area),
+            }
         })?;
         Ok(())
     }
@@ -74,6 +82,18 @@ impl<B: Backend> Tui<B> {
         self.terminal.show_cursor()?;
         Ok(())
     }
+}
+
+fn render_header_block(frame: &mut Frame, main_area: Rect) {
+    let block = Block::default()
+        .title(" kana-tui ")
+        .title_alignment(Alignment::Center)
+        .title_style(Style::default().bold().fg(Color::Red))
+        .borders(Borders::all())
+        .border_type(BorderType::Thick)
+        .border_style(Style::default().fg(Color::DarkGray));
+
+    frame.render_widget(block, main_area);
 }
 
 pub fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
