@@ -1,4 +1,4 @@
-use crate::pages::homepage;
+use crate::pages::{homepage, study_page};
 
 #[derive(Debug)]
 pub struct App {
@@ -15,6 +15,7 @@ impl Default for App {
     }
 }
 
+#[bon::bon]
 impl App {
     pub fn new() -> Self {
         Self::default()
@@ -28,21 +29,19 @@ impl App {
         self.running = false;
     }
 
-    pub fn go_to_homepage(&mut self) {
-        self.current_page = Page::Homepage(homepage::PageData::default())
+    #[builder]
+    pub fn go_to_homepage(&mut self, data: Option<homepage::PageData>) {
+        self.current_page = Page::Homepage(data.unwrap_or_default())
     }
 
-    pub fn go_to_homepage_with_data(&mut self, page_data: homepage::PageData) {
-        self.current_page = Page::Homepage(page_data)
-    }
-
-    pub fn go_to_study_page(&mut self) {
-        self.current_page = Page::StudyPage
+    #[builder]
+    pub fn go_to_study_page(&mut self, data: Option<study_page::PageData>) {
+        self.current_page = Page::StudyPage(data.unwrap_or_default())
     }
 }
 
 #[derive(Debug)]
 pub enum Page {
     Homepage(homepage::PageData),
-    StudyPage,
+    StudyPage(study_page::PageData),
 }

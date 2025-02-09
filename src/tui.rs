@@ -52,13 +52,17 @@ impl<B: Backend> Tui<B> {
     /// Corresponding to each page render function.
     pub fn draw(&mut self, app: &mut App) -> AppResult<()> {
         self.terminal.draw(|frame| {
-            let main_area = center(frame.area(), Constraint::Max(50), Constraint::Max(30));
+            let main_area = flex(
+                frame.area(),
+                (Flex::Center, Constraint::Max(50)),
+                (Flex::Center, Constraint::Max(30)),
+            );
             render_header_block(frame, main_area);
             // to prevent overlap with the header block
             let inner_main_area = main_area.inner(Margin::new(1, 1));
             match app.current_page {
                 Page::Homepage(_) => pages::homepage::render(app, frame, inner_main_area),
-                Page::StudyPage => pages::study_page::render(app, frame, inner_main_area),
+                Page::StudyPage(_) => pages::study_page::render(app, frame, inner_main_area),
             }
         })?;
         Ok(())
@@ -96,10 +100,10 @@ fn render_header_block(frame: &mut Frame, main_area: Rect) {
     frame.render_widget(block, main_area);
 }
 
-pub fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
-    let [area] = Layout::horizontal([horizontal])
-        .flex(Flex::Center)
+pub fn flex(area: Rect, horizontal: (Flex, Constraint), vertical: (Flex, Constraint)) -> Rect {
+    let [area] = Layout::horizontal([horizontal.1])
+        .flex(horizontal.0)
         .areas(area);
-    let [area] = Layout::vertical([vertical]).flex(Flex::Center).areas(area);
+    let [area] = Layout::vertical([vertical.1]).flex(vertical.0).areas(area);
     area
 }

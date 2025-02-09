@@ -4,7 +4,7 @@ use crate::{
 };
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
-    layout::{Constraint, Rect},
+    layout::{Constraint, Flex, Rect},
     style::Stylize,
     text::Line,
     widgets::Paragraph,
@@ -17,10 +17,10 @@ pub fn render(app: &mut App, frame: &mut Frame, main_area: Rect) {
     let page_data = PageData::extract(&app.current_page).unwrap();
 
     let menu = MenuOption::render(&page_data.current_option);
-    let menu_area = tui::center(
+    let menu_area = tui::flex(
         main_area,
-        Constraint::Length(MenuOption::get_max_width()),
-        Constraint::Length(MenuOption::get_max_height()),
+        (Flex::Center, Constraint::Length(MenuOption::width())),
+        (Flex::Center, Constraint::Length(MenuOption::height())),
     );
     frame.render_widget(menu, menu_area);
 }
@@ -32,7 +32,7 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
         (_, KeyCode::Esc | KeyCode::Char('q')) => app.quit(),
         (MenuOption::Quit, KeyCode::Enter) => app.quit(),
         (MenuOption::Start, KeyCode::Enter) => {
-            app.go_to_study_page();
+            app.go_to_study_page().call();
             return;
         }
         (_, KeyCode::Left | KeyCode::Up) => page_data.previous_option(),
@@ -40,7 +40,7 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
         _ => {}
     }
 
-    app.go_to_homepage_with_data(page_data);
+    app.go_to_homepage().data(page_data).call();
 }
 
 #[derive(Debug, Clone, Default)]
@@ -52,7 +52,7 @@ impl PageData {
     fn extract(page: &Page) -> Option<&Self> {
         match page {
             Page::Homepage(page_data) => Some(page_data),
-            Page::StudyPage => None,
+            Page::StudyPage(_) => None,
         }
     }
 
@@ -95,14 +95,14 @@ impl MenuOption {
         Paragraph::new(options)
     }
 
-    fn get_max_width() -> u16 {
+    fn width() -> u16 {
         MenuOption::iter()
             .map(|o| o.to_string().len())
             .max()
             .unwrap_or(0) as u16
     }
 
-    fn get_max_height() -> u16 {
+    fn height() -> u16 {
         (MenuOption::COUNT as u16) * 2 - 1
     }
 }
