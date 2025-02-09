@@ -28,7 +28,11 @@ impl App {
         self.running = false;
     }
 
-    pub fn go_to_homepage(&mut self, page_data: homepage::PageData) {
+    pub fn go_to_homepage(&mut self) {
+        self.current_page = Page::Homepage(homepage::PageData::default())
+    }
+
+    pub fn go_to_homepage_with_data(&mut self, page_data: homepage::PageData) {
         self.current_page = Page::Homepage(page_data)
     }
 

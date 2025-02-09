@@ -4,41 +4,32 @@ use crate::{
 };
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
-    layout::{Alignment, Constraint},
-    style::{Color, Style, Stylize},
+    layout::{Constraint, Rect},
+    style::Stylize,
     text::Line,
-    widgets::{Block, BorderType, Borders, Paragraph},
+    widgets::Paragraph,
     Frame,
 };
 use std::fmt::Display;
 use strum::{EnumCount, EnumIter, IntoEnumIterator};
 
-pub fn render(app: &mut App, frame: &mut Frame) {
+pub fn render(app: &mut App, frame: &mut Frame, main_area: Rect) {
     let page_data = PageData::extract(&app.current_page).unwrap();
 
-    let block = Block::default()
-        .title(" kana-tui ")
-        .title_alignment(Alignment::Center)
-        .title_style(Style::default().bold().fg(Color::Red))
-        .borders(Borders::all())
-        .border_type(BorderType::Thick)
-        .border_style(Style::default().fg(Color::DarkGray));
-
-    frame.render_widget(block, frame.area());
-
-    let menu = MenuOption::render(&page_data.current_option).centered();
-    let area = tui::center(
-        frame.area(),
+    let menu = MenuOption::render(&page_data.current_option);
+    let menu_area = tui::center(
+        main_area,
         Constraint::Length(MenuOption::get_max_width()),
         Constraint::Length(MenuOption::get_max_height()),
     );
-    frame.render_widget(menu, area);
+    frame.render_widget(menu, menu_area);
 }
 
 pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
     let mut page_data = PageData::extract(&app.current_page).unwrap().clone();
 
     match (&page_data.current_option, key_event.code) {
+        (_, KeyCode::Esc | KeyCode::Char('q')) => app.quit(),
         (MenuOption::Quit, KeyCode::Enter) => app.quit(),
         (MenuOption::Start, KeyCode::Enter) => {
             app.go_to_study_page();
@@ -49,7 +40,7 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
         _ => {}
     }
 
-    app.go_to_homepage(page_data);
+    app.go_to_homepage_with_data(page_data);
 }
 
 #[derive(Debug, Clone, Default)]
@@ -92,7 +83,7 @@ impl MenuOption {
         let mut options: Vec<Line> = Vec::new();
         for (i, option) in MenuOption::iter().enumerate() {
             let l = if option.eq(current_option) {
-                Line::from(option.to_string()).bold()
+                Line::from(option.to_string()).bold().underlined()
             } else {
                 Line::from(option.to_string())
             };
