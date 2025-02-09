@@ -170,6 +170,7 @@ impl super::ValidateGuess for Kana {
     }
 }
 
+#[allow(dead_code)]
 impl Kana {
     pub fn to_hiragana(&self) -> &str {
         match self {
