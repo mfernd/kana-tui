@@ -1,3 +1,4 @@
+use super::result_page;
 use crate::{
     app::{App, Page},
     study::{
@@ -10,7 +11,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Flex, Layout, Rect},
     style::Stylize,
-    widgets::Paragraph,
+    text::{Line, ToLine},
     Frame,
 };
 use tui_popup::Popup;
@@ -25,7 +26,7 @@ pub fn render(app: &mut App, frame: &mut Frame, main_area: Rect) {
     ])
     .areas(main_area);
 
-    let kana_title = Paragraph::new(match page_data.representation {
+    let kana_title = Line::from(match page_data.representation {
         KanaRepresentation::Hiragana => page_data.current_kana.to_hiragana(),
         KanaRepresentation::Katakana => page_data.current_kana.to_katakana(),
     })
@@ -41,12 +42,12 @@ pub fn render(app: &mut App, frame: &mut Frame, main_area: Rect) {
     );
 
     if let Some(ref indication) = page_data.indication {
-        let good_wrong_indication = Paragraph::new(indication.to_string()).centered();
+        let good_wrong_indication = indication.to_line().dim().centered();
         frame.render_widget(
             good_wrong_indication,
             tui::flex(
                 area_middle,
-                (Flex::Center, Constraint::Length(6)),
+                (Flex::Center, Constraint::Fill(1)),
                 (Flex::Center, Constraint::Length(1)),
             ),
         );
@@ -82,7 +83,9 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
         (false, _, KeyCode::Enter) => {
             if page_data.is_input_valid() {
                 page_data.good_guesses.push(page_data.current_kana.clone());
-                page_data.next_kana();
+                if !page_data.next_kana(app) {
+                    return;
+                }
             } else {
                 page_data.indication = Some(Indication::WrongGuess);
                 page_data.wrong_guesses.push(page_data.current_kana.clone());
@@ -92,7 +95,9 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
         (false, _, KeyCode::Char(' ')) => {
             let help = Some(Indication::Help(page_data.current_kana.clone()));
             if page_data.indication.eq(&help) {
-                page_data.next_kana();
+                if !page_data.next_kana(app) {
+                    return;
+                }
             } else {
                 page_data.indication = help;
                 page_data.wrong_guesses.push(page_data.current_kana.clone());
@@ -106,12 +111,12 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
 
 #[derive(Debug, Clone)]
 pub struct PageData {
-    representation: KanaRepresentation,
-    kanas: Vec<Kana>,
+    pub representation: KanaRepresentation,
+    pub kanas: Vec<Kana>,
+    pub good_guesses: Vec<Kana>,
+    pub wrong_guesses: Vec<Kana>,
     current_kana: Kana,
     indication: Option<Indication>,
-    good_guesses: Vec<Kana>,
-    wrong_guesses: Vec<Kana>,
     user_input: TextState<'static>,
     is_paused: bool,
 }
@@ -119,8 +124,8 @@ pub struct PageData {
 impl PageData {
     fn extract(page: &Page) -> Option<&Self> {
         match page {
-            Page::Homepage(_) => None,
             Page::StudyPage(page_data) => Some(page_data),
+            _ => None,
         }
     }
 
@@ -128,14 +133,18 @@ impl PageData {
         self.current_kana.validate_guess(self.user_input.value())
     }
 
-    fn next_kana(&mut self) {
+    /// Update [PageData] with next kana.
+    /// If there are no kana left, return `false` and go to result page.
+    fn next_kana(&mut self, app: &mut App) -> bool {
         if let Some(next_kana) = self.kanas.pop() {
             self.current_kana = next_kana;
             self.indication = None;
             self.user_input = TextState::new().with_focus(tui_prompts::FocusState::Focused);
-        } else {
-            // TODO: go to result page
+            return true;
         }
+
+        app.go_to_result_page(result_page::PageData::from(self.clone()));
+        false
     }
 }
 

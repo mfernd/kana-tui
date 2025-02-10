@@ -7,6 +7,15 @@ pub enum KanaRepresentation {
     Katakana,
 }
 
+impl std::fmt::Display for KanaRepresentation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            KanaRepresentation::Hiragana => write!(f, "hiragana"),
+            KanaRepresentation::Katakana => write!(f, "katakana"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, EnumIter)]
 pub enum Kana {
     N,
