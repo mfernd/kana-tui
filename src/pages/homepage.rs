@@ -52,7 +52,7 @@ impl PageData {
     fn extract(page: &Page) -> Option<&Self> {
         match page {
             Page::Homepage(page_data) => Some(page_data),
-            Page::StudyPage(_) => None,
+            _ => None,
         }
     }
 

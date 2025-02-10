@@ -1,4 +1,4 @@
-use crate::pages::{homepage, study_page};
+use crate::pages::{homepage, result_page, study_page};
 
 #[derive(Debug)]
 pub struct App {
@@ -38,10 +38,15 @@ impl App {
     pub fn go_to_study_page(&mut self, data: Option<study_page::PageData>) {
         self.current_page = Page::StudyPage(data.unwrap_or_default())
     }
+
+    pub fn go_to_result_page(&mut self, data: result_page::PageData) {
+        self.current_page = Page::ResultPage(data)
+    }
 }
 
 #[derive(Debug)]
 pub enum Page {
     Homepage(homepage::PageData),
     StudyPage(study_page::PageData),
+    ResultPage(result_page::PageData),
 }

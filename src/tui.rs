@@ -63,6 +63,7 @@ impl<B: Backend> Tui<B> {
             match app.current_page {
                 Page::Homepage(_) => pages::homepage::render(app, frame, inner_main_area),
                 Page::StudyPage(_) => pages::study_page::render(app, frame, inner_main_area),
+                Page::ResultPage(_) => pages::result_page::render(app, frame, inner_main_area),
             }
         })?;
         Ok(())
