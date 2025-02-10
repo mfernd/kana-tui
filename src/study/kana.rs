@@ -7,7 +7,7 @@ pub enum KanaRepresentation {
     Katakana,
 }
 
-#[derive(Debug, Clone, EnumIter)]
+#[derive(Debug, Clone, PartialEq, EnumIter)]
 pub enum Kana {
     N,
     // ∅
