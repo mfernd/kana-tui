@@ -54,8 +54,8 @@ impl<B: Backend> Tui<B> {
         self.terminal.draw(|frame| {
             let main_area = flex(
                 frame.area(),
-                (Flex::Center, Constraint::Max(50)),
-                (Flex::Center, Constraint::Max(30)),
+                (Flex::Center, Constraint::Max(32)),
+                (Flex::Center, Constraint::Max(20)),
             );
             render_header_block(frame, main_area);
             // to prevent overlap with the header block
