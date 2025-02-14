@@ -12,8 +12,7 @@ enum_dispatch = "0.3"
 futures = "0.3"
 rand = { version = "0.9", features = ["small_rng"] }
 ratatui = "0.29"
-strum = "0.26"
-strum_macros = "0.26"
+strum = { version = "0.27", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 tui-popup = "0.6.0"
 tui-prompts = "0.5.0"
