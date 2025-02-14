@@ -1,6 +1,5 @@
-use super::result_page;
 use crate::{
-    app::{App, Page},
+    app::{IPage, Page},
     study::{
         kana::{Kana, KanaRepresentation},
         ValidateGuess,
@@ -17,100 +16,8 @@ use ratatui::{
 use tui_popup::Popup;
 use tui_prompts::{Prompt, State, TextPrompt, TextState};
 
-pub fn render(app: &mut App, frame: &mut Frame, main_area: Rect) {
-    let mut page_data = PageData::extract(&app.current_page).unwrap().clone();
-    let [area_top, area_middle, area_bottom] = Layout::vertical([
-        Constraint::Fill(1),
-        Constraint::Length(3),
-        Constraint::Fill(1),
-    ])
-    .areas(main_area);
-
-    let kana_title = Line::from(match page_data.representation {
-        KanaRepresentation::Hiragana => page_data.current_kana.to_hiragana(),
-        KanaRepresentation::Katakana => page_data.current_kana.to_katakana(),
-    })
-    .bold()
-    .centered();
-    frame.render_widget(
-        kana_title,
-        tui::flex(
-            area_top,
-            (Flex::Center, Constraint::Length(6)),
-            (Flex::End, Constraint::Length(1)),
-        ),
-    );
-
-    if let Some(ref indication) = page_data.indication {
-        let good_wrong_indication = indication.to_line().dim().centered();
-        frame.render_widget(
-            good_wrong_indication,
-            tui::flex(
-                area_middle,
-                (Flex::Center, Constraint::Fill(1)),
-                (Flex::Center, Constraint::Length(1)),
-            ),
-        );
-    }
-
-    let user_input = TextPrompt::from("rōmaji");
-    let user_input_layout = tui::flex(
-        area_bottom,
-        (Flex::Center, Constraint::Length(20)),
-        (Flex::Start, Constraint::Length(1)),
-    );
-    user_input.draw(frame, user_input_layout, &mut page_data.user_input);
-
-    if page_data.is_paused {
-        let popup = Popup::new("Press any key to exit").title("paused");
-        frame.render_widget(&popup, frame.area());
-    }
-
-    app.go_to_study_page().data(page_data).call();
-}
-
-pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
-    let mut page_data = PageData::extract(&app.current_page).unwrap().clone();
-
-    match (page_data.is_paused, key_event.modifiers, key_event.code) {
-        (_, _, KeyCode::Esc) => {
-            app.go_to_homepage().call();
-            return;
-        }
-        (false, _, KeyCode::Pause)
-        | (false, KeyModifiers::CONTROL, KeyCode::Char('p'))
-        | (true, _, _) => page_data.is_paused = !page_data.is_paused,
-        (false, _, KeyCode::Enter) => {
-            if page_data.is_input_valid() {
-                page_data.good_guesses.push(page_data.current_kana.clone());
-                if !page_data.next_kana(app) {
-                    return;
-                }
-            } else {
-                page_data.indication = Some(Indication::WrongGuess);
-                page_data.wrong_guesses.push(page_data.current_kana.clone());
-                page_data.user_input.truncate();
-            }
-        }
-        (false, _, KeyCode::Char(' ')) => {
-            let help = Some(Indication::Help(page_data.current_kana.clone()));
-            if page_data.indication.eq(&help) {
-                if !page_data.next_kana(app) {
-                    return;
-                }
-            } else {
-                page_data.indication = help;
-                page_data.wrong_guesses.push(page_data.current_kana.clone());
-            }
-        }
-        (false, _, _) => page_data.user_input.handle_key_event(key_event),
-    }
-
-    app.go_to_study_page().data(page_data).call();
-}
-
 #[derive(Debug, Clone)]
-pub struct PageData {
+pub struct StudyPage {
     pub representation: KanaRepresentation,
     pub kanas: Vec<Kana>,
     pub good_guesses: Vec<Kana>,
@@ -121,21 +28,108 @@ pub struct PageData {
     is_paused: bool,
 }
 
-impl PageData {
-    fn extract(page: &Page) -> Option<&Self> {
-        match page {
-            Page::StudyPage(page_data) => Some(page_data),
-            _ => None,
+impl IPage for StudyPage {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect) {
+        let [area_top, area_middle, area_bottom] = Layout::vertical([
+            Constraint::Fill(1),
+            Constraint::Length(3),
+            Constraint::Fill(1),
+        ])
+        .areas(main_area);
+
+        let kana_title = Line::from(match self.representation {
+            KanaRepresentation::Hiragana => self.current_kana.to_hiragana(),
+            KanaRepresentation::Katakana => self.current_kana.to_katakana(),
+        })
+        .bold()
+        .centered();
+        frame.render_widget(
+            kana_title,
+            tui::flex(
+                area_top,
+                (Flex::Center, Constraint::Length(6)),
+                (Flex::End, Constraint::Length(1)),
+            ),
+        );
+
+        if let Some(ref indication) = self.indication {
+            let good_wrong_indication = indication.to_line().dim().centered();
+            frame.render_widget(
+                good_wrong_indication,
+                tui::flex(
+                    area_middle,
+                    (Flex::Center, Constraint::Fill(1)),
+                    (Flex::Center, Constraint::Length(1)),
+                ),
+            );
+        }
+
+        let user_input = TextPrompt::from("rōmaji");
+        let user_input_layout = tui::flex(
+            area_bottom,
+            (Flex::Center, Constraint::Length(20)),
+            (Flex::Start, Constraint::Length(1)),
+        );
+        user_input.draw(frame, user_input_layout, &mut self.user_input);
+
+        if self.is_paused {
+            let popup = Popup::new("Press any key to exit").title("paused");
+            frame.render_widget(&popup, frame.area());
         }
     }
 
+    fn handle_key_events(&mut self, key_event: KeyEvent) -> Option<Page> {
+        if key_event.code == KeyCode::Esc {
+            return Page::go_home().call();
+        }
+
+        if self.is_paused
+            || key_event.code == KeyCode::Pause
+            || (key_event.modifiers == KeyModifiers::CONTROL
+                && key_event.code == KeyCode::Char('p'))
+        {
+            self.is_paused = !self.is_paused;
+            // early return to prevent all other events
+            return self.go_same_page();
+        }
+
+        match (key_event.modifiers, key_event.code) {
+            (_, KeyCode::Enter) => {
+                if self.is_input_valid() {
+                    self.good_guesses.push(self.current_kana.clone());
+                    if !self.next_kana() {
+                        return Page::go_result().page(self.clone().into()).call();
+                    }
+                } else {
+                    self.trigger_wrong_input();
+                }
+            }
+            (_, KeyCode::Char(' ')) => {
+                let help = Some(Indication::Help(self.current_kana.clone()));
+                if self.indication.eq(&help) {
+                    if !self.next_kana() {
+                        return Page::go_result().page(self.clone().into()).call();
+                    }
+                } else {
+                    self.indication = help;
+                    self.wrong_guesses.push(self.current_kana.clone());
+                }
+            }
+            _ => self.user_input.handle_key_event(key_event),
+        };
+
+        self.go_same_page()
+    }
+}
+
+impl StudyPage {
     fn is_input_valid(&self) -> bool {
         self.current_kana.validate_guess(self.user_input.value())
     }
 
     /// Update [PageData] with next kana.
     /// If there are no kana left, return `false` and go to result page.
-    fn next_kana(&mut self, app: &mut App) -> bool {
+    fn next_kana(&mut self) -> bool {
         if let Some(next_kana) = self.kanas.pop() {
             self.current_kana = next_kana;
             self.indication = None;
@@ -143,12 +137,21 @@ impl PageData {
             return true;
         }
 
-        app.go_to_result_page(result_page::PageData::from(self.clone()));
         false
+    }
+
+    fn trigger_wrong_input(&mut self) {
+        self.indication = Some(Indication::WrongGuess);
+        self.wrong_guesses.push(self.current_kana.clone());
+        self.user_input.truncate();
+    }
+
+    fn go_same_page(&self) -> Option<Page> {
+        Page::go_study().page(self.clone()).call()
     }
 }
 
-impl Default for PageData {
+impl Default for StudyPage {
     fn default() -> Self {
         let mut kanas = crate::study::create_study_plan();
         let first_kana = kanas.pop().unwrap(); // panic should not happen

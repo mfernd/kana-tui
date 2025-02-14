@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bon = "3.3"
 crossterm = { version = "0.28", features = ["event-stream"] }
+enum_dispatch = "0.3"
 futures = "0.3"
 rand = { version = "0.9", features = ["small_rng"] }
 ratatui = "0.29"

@@ -1,6 +1,6 @@
-use crate::app::{App, Page};
+use crate::app::{App, IPage};
 use crate::event::EventHandler;
-use crate::{pages, AppResult};
+use crate::AppResult;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use ratatui::backend::Backend;
@@ -60,11 +60,7 @@ impl<B: Backend> Tui<B> {
             render_header_block(frame, main_area);
             // to prevent overlap with the header block
             let inner_main_area = main_area.inner(Margin::new(1, 1));
-            match app.current_page {
-                Page::Homepage(_) => pages::homepage::render(app, frame, inner_main_area),
-                Page::StudyPage(_) => pages::study_page::render(app, frame, inner_main_area),
-                Page::ResultPage(_) => pages::result_page::render(app, frame, inner_main_area),
-            }
+            app.current_page.render(frame, inner_main_area);
         })?;
         Ok(())
     }
