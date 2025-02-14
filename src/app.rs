@@ -1,4 +1,8 @@
-use crate::pages::{homepage, result_page, study_page};
+use crate::pages;
+use bon::bon;
+use crossterm::event::KeyEvent;
+use enum_dispatch::enum_dispatch;
+use ratatui::{layout::Rect, Frame};
 
 #[derive(Debug)]
 pub struct App {
@@ -10,12 +14,11 @@ impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            current_page: Page::Homepage(homepage::PageData::default()),
+            current_page: Page::Homepage(pages::Homepage::default()),
         }
     }
 }
 
-#[bon::bon]
 impl App {
     pub fn new() -> Self {
         Self::default()
@@ -29,24 +32,43 @@ impl App {
         self.running = false;
     }
 
-    #[builder]
-    pub fn go_to_homepage(&mut self, data: Option<homepage::PageData>) {
-        self.current_page = Page::Homepage(data.unwrap_or_default())
-    }
-
-    #[builder]
-    pub fn go_to_study_page(&mut self, data: Option<study_page::PageData>) {
-        self.current_page = Page::StudyPage(data.unwrap_or_default())
-    }
-
-    pub fn go_to_result_page(&mut self, data: result_page::PageData) {
-        self.current_page = Page::ResultPage(data)
+    pub fn go_to(&mut self, new_page: Page) {
+        self.current_page = new_page;
     }
 }
 
+type ReturnedPage = Option<Page>;
+
+#[enum_dispatch]
+pub trait IPage: std::fmt::Debug {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect);
+    fn handle_key_events(&mut self, key_event: KeyEvent) -> ReturnedPage;
+}
+
 #[derive(Debug)]
+#[enum_dispatch(IPage)]
 pub enum Page {
-    Homepage(homepage::PageData),
-    StudyPage(study_page::PageData),
-    ResultPage(result_page::PageData),
+    Homepage(pages::Homepage),
+    StudyPage(pages::StudyPage),
+    ResultPage(pages::ResultPage),
+}
+
+// These implementations are juste here to simplify my life (or be more readable) when changing/updating page...
+// Instead of doing `Some(Homepage::default().into())`, `Some(Page::from(self.clone()))`...
+#[bon]
+impl Page {
+    #[builder]
+    pub fn go_home(page: Option<pages::Homepage>) -> ReturnedPage {
+        Some(page.unwrap_or_default().into())
+    }
+
+    #[builder]
+    pub fn go_study(page: Option<pages::StudyPage>) -> ReturnedPage {
+        Some(page.unwrap_or_default().into())
+    }
+
+    #[builder]
+    pub fn go_result(page: pages::ResultPage) -> ReturnedPage {
+        Some(page.into())
+    }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    app::{App, Page},
+    app::{IPage, Page},
     tui,
 };
 use crossterm::event::{KeyCode, KeyEvent};
@@ -13,49 +13,37 @@ use ratatui::{
 use std::fmt::Display;
 use strum::{EnumCount, EnumIter, IntoEnumIterator};
 
-pub fn render(app: &mut App, frame: &mut Frame, main_area: Rect) {
-    let page_data = PageData::extract(&app.current_page).unwrap();
-
-    let menu = MenuOption::render(&page_data.current_option);
-    let menu_area = tui::flex(
-        main_area,
-        (Flex::Center, Constraint::Length(MenuOption::width())),
-        (Flex::Center, Constraint::Length(MenuOption::height())),
-    );
-    frame.render_widget(menu, menu_area);
-}
-
-pub fn handle_key_events(key_event: KeyEvent, app: &mut App) {
-    let mut page_data = PageData::extract(&app.current_page).unwrap().clone();
-
-    match (&page_data.current_option, key_event.code) {
-        (_, KeyCode::Esc | KeyCode::Char('q')) => app.quit(),
-        (MenuOption::Quit, KeyCode::Enter) => app.quit(),
-        (MenuOption::Start, KeyCode::Enter) => {
-            app.go_to_study_page().call();
-            return;
-        }
-        (_, KeyCode::Left | KeyCode::Up) => page_data.previous_option(),
-        (_, KeyCode::Right | KeyCode::Down) => page_data.next_option(),
-        _ => {}
-    }
-
-    app.go_to_homepage().data(page_data).call();
-}
-
 #[derive(Debug, Clone, Default)]
-pub struct PageData {
+pub struct Homepage {
     current_option: MenuOption,
 }
 
-impl PageData {
-    fn extract(page: &Page) -> Option<&Self> {
-        match page {
-            Page::Homepage(page_data) => Some(page_data),
-            _ => None,
-        }
+impl IPage for Homepage {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect) {
+        let menu = MenuOption::render(&self.current_option);
+        let menu_area = tui::flex(
+            main_area,
+            (Flex::Center, Constraint::Length(MenuOption::width())),
+            (Flex::Center, Constraint::Length(MenuOption::height())),
+        );
+        frame.render_widget(menu, menu_area);
     }
 
+    fn handle_key_events(&mut self, key_event: KeyEvent) -> Option<Page> {
+        match (&self.current_option, key_event.code) {
+            (_, KeyCode::Esc | KeyCode::Char('q')) => return None,
+            (MenuOption::Quit, KeyCode::Enter) => return None,
+            (MenuOption::Start, KeyCode::Enter) => return Page::go_study().call(),
+            (_, KeyCode::Left | KeyCode::Up) => self.previous_option(),
+            (_, KeyCode::Right | KeyCode::Down) => self.next_option(),
+            _ => {}
+        }
+
+        Page::go_home().page(self.clone()).call()
+    }
+}
+
+impl Homepage {
     fn next_option(&mut self) {
         match self.current_option {
             MenuOption::Start => self.current_option = MenuOption::Quit,
@@ -72,7 +60,7 @@ impl PageData {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, EnumIter, EnumCount)]
-pub enum MenuOption {
+enum MenuOption {
     #[default]
     Start,
     Quit,
