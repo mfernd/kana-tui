@@ -1,4 +1,4 @@
-use crate::pages::{homepage, result_page, study_page};
+use crate::pages;
 use bon::bon;
 use crossterm::event::KeyEvent;
 use enum_dispatch::enum_dispatch;
@@ -14,7 +14,7 @@ impl Default for App {
     fn default() -> Self {
         Self {
             running: true,
-            current_page: Page::Homepage(homepage::Homepage::default()),
+            current_page: Page::Homepage(pages::Homepage::default()),
         }
     }
 }
@@ -48,9 +48,9 @@ pub trait IPage: std::fmt::Debug {
 #[derive(Debug)]
 #[enum_dispatch(IPage)]
 pub enum Page {
-    Homepage(homepage::Homepage),
-    StudyPage(study_page::StudyPage),
-    ResultPage(result_page::ResultPage),
+    Homepage(pages::Homepage),
+    StudyPage(pages::StudyPage),
+    ResultPage(pages::ResultPage),
 }
 
 // These implementations are juste here to simplify my life (or be more readable) when changing/updating page...
@@ -58,17 +58,17 @@ pub enum Page {
 #[bon]
 impl Page {
     #[builder]
-    pub fn go_home(page: Option<homepage::Homepage>) -> ReturnedPage {
+    pub fn go_home(page: Option<pages::Homepage>) -> ReturnedPage {
         Some(page.unwrap_or_default().into())
     }
 
     #[builder]
-    pub fn go_study(page: Option<study_page::StudyPage>) -> ReturnedPage {
+    pub fn go_study(page: Option<pages::StudyPage>) -> ReturnedPage {
         Some(page.unwrap_or_default().into())
     }
 
     #[builder]
-    pub fn go_result(page: result_page::ResultPage) -> ReturnedPage {
+    pub fn go_result(page: pages::ResultPage) -> ReturnedPage {
         Some(page.into())
     }
 }
