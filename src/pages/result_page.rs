@@ -68,6 +68,8 @@ impl IPage for ResultPage {
     fn handle_key_events(&mut self, _: KeyEvent) -> Option<Page> {
         Page::go_home().call()
     }
+
+    fn tick(&mut self) {}
 }
 
 impl From<super::study_page::StudyPage> for ResultPage {

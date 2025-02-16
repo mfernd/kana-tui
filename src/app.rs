@@ -25,7 +25,9 @@ impl App {
     }
 
     /// Handles the tick event of the terminal.
-    pub fn tick(&self) {}
+    pub fn tick(&mut self) {
+        self.current_page.tick();
+    }
 
     /// Set running to false to quit the application.
     pub fn quit(&mut self) {
@@ -41,8 +43,12 @@ type ReturnedPage = Option<Page>;
 
 #[enum_dispatch]
 pub trait IPage: std::fmt::Debug {
+    /// Used when rendering the page.
     fn render(&mut self, frame: &mut Frame, main_area: Rect);
+    /// To update the content of the page with key events.
     fn handle_key_events(&mut self, key_event: KeyEvent) -> ReturnedPage;
+    /// To handle events on ticks.
+    fn tick(&mut self);
 }
 
 #[derive(Debug)]
