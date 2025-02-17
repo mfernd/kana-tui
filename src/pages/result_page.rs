@@ -16,6 +16,7 @@ pub struct ResultPage {
     representation: KanaRepresentation,
     good_guesses: Vec<Kana>,
     wrong_guesses: Vec<Kana>,
+    total_elapsed_time: u128,
 }
 
 impl IPage for ResultPage {
@@ -25,28 +26,31 @@ impl IPage for ResultPage {
             Constraint::Fill(4),
             Constraint::Length(2),
         ])
-        .areas(main_area.inner(Margin::new(2, 1)));
+        .areas(main_area.inner(Margin::new(1, 1)));
 
         let congratulations_line = Line::from("You finished! \u{1F44F}").bold().centered();
         frame.render_widget(congratulations_line, area_top);
 
         let kanas_count = self.good_guesses.len() + self.wrong_guesses.len();
+        let correct_percent = (self.good_guesses.len() as f64 / kanas_count as f64) * 100_f64;
         let kanas_count_line = Line::from(Vec::from([
-            "Your study plan contained ".to_span(),
-            Span::from(format!("{}", kanas_count)).bold(),
-            Span::from(format!(" {}(s).", self.representation)),
+            "You have completed your study plan of ".to_span(),
+            kanas_count.to_span().bold(),
+            Span::from(format!(" {}(s) in ", self.representation)),
+            self.format_time().bold(),
+            ".".to_span(),
         ]));
         let goods_line = Line::from(Vec::from([
             "> good guesses: ".to_span(),
             Span::from(format!("{}", self.good_guesses.len())),
             "/".to_span(),
-            Span::from(format!("{}", kanas_count)),
+            kanas_count.to_span(),
         ]));
         let wrongs_line = Line::from(Vec::from([
             "> wrong guesses: ".to_span(),
             Span::from(format!("{}", self.wrong_guesses.len())),
             "/".to_span(),
-            Span::from(format!("{}", kanas_count)),
+            kanas_count.to_span(),
         ]));
         let result_paragraph = Paragraph::new(Vec::from([
             kanas_count_line,
@@ -54,6 +58,7 @@ impl IPage for ResultPage {
             "You had:".to_line(),
             goods_line,
             wrongs_line,
+            format!("Total: {:.0}% correct answers.", correct_percent).into(),
         ]))
         .wrap(Wrap { trim: true });
         frame.render_widget(result_paragraph, area_middle);
@@ -70,9 +75,23 @@ impl IPage for ResultPage {
     }
 }
 
+impl ResultPage {
+    fn format_time(&self) -> String {
+        let seconds = (self.total_elapsed_time / 1000) % 60;
+        let minutes = (self.total_elapsed_time / 60_000) % 60;
+        if minutes == 0 {
+            return format!("{}s", seconds);
+        } else if seconds == 0 {
+            return format!("{}min", seconds);
+        }
+        format!("{}min and {}s", minutes, seconds)
+    }
+}
+
 impl From<super::study_page::StudyPage> for ResultPage {
     fn from(value: super::study_page::StudyPage) -> Self {
         Self {
+            total_elapsed_time: value.total_elapsed_time_ms(),
             representation: value.representation,
             good_guesses: value.good_guesses,
             wrong_guesses: value.wrong_guesses,
