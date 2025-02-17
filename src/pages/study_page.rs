@@ -109,6 +109,7 @@ impl IPage for StudyPage {
                 if self.is_input_valid() {
                     self.good_guesses.push(self.current_kana.clone());
                     if !self.next_kana() {
+                        self.finish_study_hook();
                         return Page::go_result().page(self.clone().into()).call();
                     }
                 } else {
@@ -119,6 +120,7 @@ impl IPage for StudyPage {
                 let help = Some(Indication::Help(self.current_kana.clone()));
                 if self.indication.eq(&help) {
                     if !self.next_kana() {
+                        self.finish_study_hook();
                         return Page::go_result().page(self.clone().into()).call();
                     }
                 } else {
@@ -163,6 +165,13 @@ impl StudyPage {
         Page::go_study().page(self.clone()).call()
     }
 
+    fn finish_study_hook(&mut self) {
+        // only reset timer if we have one
+        if self.current_timer.is_some() {
+            self.reset_timer();
+        }
+    }
+
     /// Used when we pause our page, will save our last elapsed time in `self.memory_elapsed_time`
     /// and remove the timer. And when we restart, the timer is restarted.
     fn reset_timer(&mut self) {
@@ -174,14 +183,18 @@ impl StudyPage {
         }
     }
 
-    fn format_timer(&self) -> String {
-        let now_elapsed_time = self
+    pub fn total_elapsed_time_ms(&self) -> u128 {
+        let timer_elapsed_time = self
             .current_timer
             .map(|instant| instant.elapsed().as_millis())
             .unwrap_or(0);
-        let elapsed_time_ms = self.memory_elapsed_ms + now_elapsed_time;
-        let seconds = (elapsed_time_ms / 1000) % 60;
-        let minutes = (elapsed_time_ms / 60_000) % 60;
+        self.memory_elapsed_ms + timer_elapsed_time
+    }
+
+    fn format_timer(&self) -> String {
+        let total_elapsed_time_ms = self.total_elapsed_time_ms();
+        let seconds = (total_elapsed_time_ms / 1000) % 60;
+        let minutes = (total_elapsed_time_ms / 60_000) % 60;
         format!("{:02}:{:02}", minutes, seconds)
     }
 }
