@@ -133,8 +133,6 @@ impl IPage for StudyPage {
 
         self.go_same_page()
     }
-
-    fn tick(&mut self) {}
 }
 
 impl StudyPage {

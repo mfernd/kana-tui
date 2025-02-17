@@ -41,8 +41,6 @@ impl IPage for Homepage {
 
         Page::go_home().page(self.clone()).call()
     }
-
-    fn tick(&mut self) {}
 }
 
 impl Homepage {
