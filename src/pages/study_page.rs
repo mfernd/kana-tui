@@ -8,11 +8,12 @@ use crate::{
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
-    layout::{Constraint, Flex, Layout, Rect},
+    layout::{Constraint, Flex, Layout, Margin, Rect},
     style::Stylize,
     text::{Line, ToLine},
     Frame,
 };
+use std::time::Instant;
 use tui_popup::Popup;
 use tui_prompts::{Prompt, State, TextPrompt, TextState};
 
@@ -26,16 +27,24 @@ pub struct StudyPage {
     indication: Option<Indication>,
     user_input: TextState<'static>,
     is_paused: bool,
+    /// Contains our current timer. Is set to None, when the page is paused.
+    current_timer: Option<Instant>,
+    /// Is updated when our page is paused.
+    memory_elapsed_ms: u128,
 }
 
 impl IPage for StudyPage {
     fn render(&mut self, frame: &mut Frame, main_area: Rect) {
-        let [area_top, area_middle, area_bottom] = Layout::vertical([
-            Constraint::Fill(1),
+        let [timer_area, kana_area, indication_area, input_area] = Layout::vertical([
             Constraint::Length(3),
-            Constraint::Fill(1),
+            Constraint::Fill(2),
+            Constraint::Length(3),
+            Constraint::Fill(3),
         ])
         .areas(main_area);
+
+        let timer = Line::from(self.format_timer()).dim().centered();
+        frame.render_widget(timer, timer_area.inner(Margin::new(0, 1)));
 
         let kana_title = Line::from(match self.representation {
             KanaRepresentation::Hiragana => self.current_kana.to_hiragana(),
@@ -46,7 +55,7 @@ impl IPage for StudyPage {
         frame.render_widget(
             kana_title,
             tui::flex(
-                area_top,
+                kana_area,
                 (Flex::Center, Constraint::Length(6)),
                 (Flex::End, Constraint::Length(1)),
             ),
@@ -57,7 +66,7 @@ impl IPage for StudyPage {
             frame.render_widget(
                 good_wrong_indication,
                 tui::flex(
-                    area_middle,
+                    indication_area,
                     (Flex::Center, Constraint::Fill(1)),
                     (Flex::Center, Constraint::Length(1)),
                 ),
@@ -66,20 +75,20 @@ impl IPage for StudyPage {
 
         let user_input = TextPrompt::from("rōmaji");
         let user_input_layout = tui::flex(
-            area_bottom,
+            input_area,
             (Flex::Center, Constraint::Length(20)),
             (Flex::Start, Constraint::Length(1)),
         );
         user_input.draw(frame, user_input_layout, &mut self.user_input);
 
         if self.is_paused {
-            let popup = Popup::new("Press any key to exit").title("paused");
+            let popup = Popup::new("Press any key to exit.").title("paused");
             frame.render_widget(&popup, frame.area());
         }
     }
 
     fn handle_key_events(&mut self, key_event: KeyEvent) -> Option<Page> {
-        if key_event.code == KeyCode::Esc {
+        if !self.is_paused && key_event.code == KeyCode::Esc {
             return Page::go_home().call();
         }
 
@@ -89,10 +98,12 @@ impl IPage for StudyPage {
                 && key_event.code == KeyCode::Char('p'))
         {
             self.is_paused = !self.is_paused;
+            self.reset_timer();
             // early return to prevent all other events
             return self.go_same_page();
         }
 
+        // handle keyboard events
         match (key_event.modifiers, key_event.code) {
             (_, KeyCode::Enter) => {
                 if self.is_input_valid() {
@@ -151,6 +162,28 @@ impl StudyPage {
     fn go_same_page(&self) -> Option<Page> {
         Page::go_study().page(self.clone()).call()
     }
+
+    /// Used when we pause our page, will save our last elapsed time in `self.memory_elapsed_time`
+    /// and remove the timer. And when we restart, the timer is restarted.
+    fn reset_timer(&mut self) {
+        if let Some(last_start_time) = self.current_timer {
+            self.memory_elapsed_ms += last_start_time.elapsed().as_millis();
+            self.current_timer = None;
+        } else {
+            self.current_timer = Some(Instant::now());
+        }
+    }
+
+    fn format_timer(&self) -> String {
+        let now_elapsed_time = self
+            .current_timer
+            .map(|instant| instant.elapsed().as_millis())
+            .unwrap_or(0);
+        let elapsed_time_ms = self.memory_elapsed_ms + now_elapsed_time;
+        let seconds = (elapsed_time_ms / 1000) % 60;
+        let minutes = (elapsed_time_ms / 60_000) % 60;
+        format!("{:02}:{:02}", minutes, seconds)
+    }
 }
 
 impl Default for StudyPage {
@@ -166,6 +199,9 @@ impl Default for StudyPage {
             wrong_guesses: Vec::new(),
             user_input: TextState::new().with_focus(tui_prompts::FocusState::Focused),
             is_paused: false,
+            // start immediately
+            current_timer: Some(Instant::now()),
+            memory_elapsed_ms: 0,
         }
     }
 }
