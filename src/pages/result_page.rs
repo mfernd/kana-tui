@@ -92,17 +92,9 @@ impl From<super::study_page::StudyPage> for ResultPage {
     fn from(value: super::study_page::StudyPage) -> Self {
         Self {
             total_elapsed_time: value.total_elapsed_time_ms(),
+            good_answers_count: value.get_count_by_result(&AnswerResult::Good),
+            wrong_answers_count: value.get_count_by_result(&AnswerResult::Wrong),
             representation: value.representation,
-            good_answers_count: value
-                .answers
-                .iter()
-                .filter_map(|(_, result)| result.eq(&AnswerResult::Good).then_some(()))
-                .count(),
-            wrong_answers_count: value
-                .answers
-                .iter()
-                .filter_map(|(_, result)| result.eq(&AnswerResult::Wrong).then_some(()))
-                .count(),
         }
     }
 }

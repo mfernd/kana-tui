@@ -21,6 +21,7 @@ use tui_prompts::{Prompt, State, TextPrompt, TextState};
 pub struct StudyPage {
     pub representation: KanaRepresentation,
     pub kanas: Vec<Kana>,
+    total_kanas: usize,
     pub answers: Vec<(Kana, AnswerResult)>,
     current_kana: Kana,
     indication: Option<Indication>,
@@ -35,13 +36,15 @@ pub struct StudyPage {
 
 impl IPage for StudyPage {
     fn render(&mut self, frame: &mut Frame, main_area: Rect) {
-        let [timer_area, kana_area, indication_area, input_area] = Layout::vertical([
-            Constraint::Length(3),
-            Constraint::Fill(2),
-            Constraint::Length(3),
-            Constraint::Fill(3),
-        ])
-        .areas(main_area);
+        let [timer_area, kana_area, indication_area, input_area, progress_area] =
+            Layout::vertical([
+                Constraint::Length(3),
+                Constraint::Fill(2),
+                Constraint::Length(3),
+                Constraint::Fill(3),
+                Constraint::Length(1),
+            ])
+            .areas(main_area);
 
         let timer = Line::from(self.format_timer()).dim().centered();
         frame.render_widget(timer, timer_area.inner(Margin::new(0, 1)));
@@ -80,6 +83,17 @@ impl IPage for StudyPage {
             (Flex::Start, Constraint::Length(1)),
         );
         user_input.draw(frame, user_input_layout, &mut self.user_input);
+
+        let progress = Line::from(format!(
+            "{}/{} | \u{2714} {} | \u{2717} {}",
+            self.answers.len(),
+            self.total_kanas,
+            self.get_count_by_result(&AnswerResult::Good),
+            self.get_count_by_result(&AnswerResult::Wrong),
+        ))
+        .dim()
+        .centered();
+        frame.render_widget(progress, progress_area);
 
         if self.is_paused {
             let popup = Popup::new("Press any key to exit.").title("paused");
@@ -182,6 +196,13 @@ impl StudyPage {
         }
     }
 
+    pub fn get_count_by_result(&self, result: &AnswerResult) -> usize {
+        self.answers
+            .iter()
+            .filter_map(|(_, r)| r.eq(result).then_some(()))
+            .count()
+    }
+
     /// Used when we pause our page, will save our last elapsed time in `self.memory_elapsed_time`
     /// and remove the timer. And when we restart, the timer is restarted.
     fn reset_timer(&mut self) {
@@ -212,10 +233,12 @@ impl StudyPage {
 impl Default for StudyPage {
     fn default() -> Self {
         let mut kanas = crate::models::create_study_plan();
+        let total_kanas = kanas.len();
         let first_kana = kanas.pop().unwrap(); // panic should not happen
         Self {
             representation: KanaRepresentation::Hiragana,
             kanas,
+            total_kanas,
             current_kana: first_kana,
             indication: None,
             answers: Vec::new(),
