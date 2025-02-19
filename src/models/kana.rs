@@ -357,7 +357,7 @@ impl super::ValidateGuess for Kana {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::study::ValidateGuess;
+    use crate::models::ValidateGuess;
 
     #[test]
     fn validate_guess_multiple() {

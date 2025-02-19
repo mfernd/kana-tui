@@ -2,6 +2,7 @@ use kana::Kana;
 use rand::seq::SliceRandom;
 use strum::IntoEnumIterator;
 
+pub mod guess;
 pub mod kana;
 
 pub trait ValidateGuess {

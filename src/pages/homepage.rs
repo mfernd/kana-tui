@@ -1,5 +1,5 @@
 use crate::{
-    app::{IPage, Page},
+    app::{IPage, Page, ReturnedPage},
     tui,
 };
 use crossterm::event::{KeyCode, KeyEvent};
@@ -29,7 +29,7 @@ impl IPage for Homepage {
         frame.render_widget(menu, menu_area);
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent) -> Option<Page> {
+    fn handle_key_events(&mut self, key_event: KeyEvent) -> ReturnedPage {
         match (&self.current_option, key_event.code) {
             (_, KeyCode::Esc | KeyCode::Char('q')) => return None,
             (MenuOption::Quit, KeyCode::Enter) => return None,

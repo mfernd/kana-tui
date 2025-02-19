@@ -37,7 +37,7 @@ impl App {
     }
 }
 
-type ReturnedPage = Option<Page>;
+pub type ReturnedPage = Option<Page>;
 
 #[enum_dispatch]
 pub trait IPage: std::fmt::Debug {

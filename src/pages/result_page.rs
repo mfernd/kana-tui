@@ -1,6 +1,6 @@
 use crate::{
-    app::{IPage, Page},
-    study::kana::{Kana, KanaRepresentation},
+    app::{IPage, Page, ReturnedPage},
+    models::{guess::GuessResultKind, kana::KanaRepresentation},
 };
 use crossterm::event::KeyEvent;
 use ratatui::{
@@ -14,8 +14,8 @@ use ratatui::{
 #[derive(Debug, Clone)]
 pub struct ResultPage {
     representation: KanaRepresentation,
-    good_guesses: Vec<Kana>,
-    wrong_guesses: Vec<Kana>,
+    good_guesses_count: usize,
+    wrong_guesses_count: usize,
     total_elapsed_time: u128,
 }
 
@@ -23,7 +23,7 @@ impl IPage for ResultPage {
     fn render(&mut self, frame: &mut Frame, main_area: Rect) {
         let [area_top, area_middle, area_bottom] = Layout::vertical([
             Constraint::Length(3),
-            Constraint::Fill(4),
+            Constraint::Fill(1),
             Constraint::Length(2),
         ])
         .areas(main_area.inner(Margin::new(1, 1)));
@@ -31,8 +31,8 @@ impl IPage for ResultPage {
         let congratulations_line = Line::from("You finished! \u{1F44F}").bold().centered();
         frame.render_widget(congratulations_line, area_top);
 
-        let kanas_count = self.good_guesses.len() + self.wrong_guesses.len();
-        let correct_percent = (self.good_guesses.len() as f64 / kanas_count as f64) * 100_f64;
+        let kanas_count = self.good_guesses_count + self.wrong_guesses_count;
+        let correct_percent = (self.good_guesses_count as f64 / kanas_count as f64) * 100_f64;
         let kanas_count_line = Line::from(Vec::from([
             "You have completed your study plan of ".to_span(),
             kanas_count.to_span().bold(),
@@ -42,13 +42,13 @@ impl IPage for ResultPage {
         ]));
         let goods_line = Line::from(Vec::from([
             "> good guesses: ".to_span(),
-            Span::from(format!("{}", self.good_guesses.len())),
+            self.good_guesses_count.to_span(),
             "/".to_span(),
             kanas_count.to_span(),
         ]));
         let wrongs_line = Line::from(Vec::from([
             "> wrong guesses: ".to_span(),
-            Span::from(format!("{}", self.wrong_guesses.len())),
+            self.wrong_guesses_count.to_span(),
             "/".to_span(),
             kanas_count.to_span(),
         ]));
@@ -70,7 +70,7 @@ impl IPage for ResultPage {
         frame.render_widget(info, area_bottom);
     }
 
-    fn handle_key_events(&mut self, _: KeyEvent) -> Option<Page> {
+    fn handle_key_events(&mut self, _: KeyEvent) -> ReturnedPage {
         Page::go_home().call()
     }
 }
@@ -93,8 +93,16 @@ impl From<super::study_page::StudyPage> for ResultPage {
         Self {
             total_elapsed_time: value.total_elapsed_time_ms(),
             representation: value.representation,
-            good_guesses: value.good_guesses,
-            wrong_guesses: value.wrong_guesses,
+            good_guesses_count: value
+                .guesses
+                .iter()
+                .filter_map(|(_, result)| result.eq(&GuessResultKind::Good).then_some(()))
+                .count(),
+            wrong_guesses_count: value
+                .guesses
+                .iter()
+                .filter_map(|(_, result)| result.eq(&GuessResultKind::Wrong).then_some(()))
+                .count(),
         }
     }
 }

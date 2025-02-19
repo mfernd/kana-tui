@@ -1,6 +1,7 @@
 use crate::{
-    app::{IPage, Page},
-    study::{
+    app::{IPage, Page, ReturnedPage},
+    models::{
+        guess::GuessResultKind,
         kana::{Kana, KanaRepresentation},
         ValidateGuess,
     },
@@ -21,12 +22,12 @@ use tui_prompts::{Prompt, State, TextPrompt, TextState};
 pub struct StudyPage {
     pub representation: KanaRepresentation,
     pub kanas: Vec<Kana>,
-    pub good_guesses: Vec<Kana>,
-    pub wrong_guesses: Vec<Kana>,
+    pub guesses: Vec<(Kana, GuessResultKind)>,
     current_kana: Kana,
     indication: Option<Indication>,
     user_input: TextState<'static>,
     is_paused: bool,
+    /// Timer should eventually be in a widget
     /// Contains our current timer. Is set to None, when the page is paused.
     current_timer: Option<Instant>,
     /// Is updated when our page is paused.
@@ -87,7 +88,7 @@ impl IPage for StudyPage {
         }
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent) -> Option<Page> {
+    fn handle_key_events(&mut self, key_event: KeyEvent) -> ReturnedPage {
         if !self.is_paused && key_event.code == KeyCode::Esc {
             return Page::go_home().call();
         }
@@ -107,13 +108,15 @@ impl IPage for StudyPage {
         match (key_event.modifiers, key_event.code) {
             (_, KeyCode::Enter) => {
                 if self.is_input_valid() {
-                    self.good_guesses.push(self.current_kana.clone());
+                    self.push_good_guess();
                     if !self.next_kana() {
                         self.finish_study_hook();
                         return Page::go_result().page(self.clone().into()).call();
                     }
                 } else {
-                    self.trigger_wrong_input();
+                    self.indication = Some(Indication::WrongGuess);
+                    self.push_wrong_guess();
+                    self.user_input.truncate();
                 }
             }
             (_, KeyCode::Char(' ')) => {
@@ -125,7 +128,7 @@ impl IPage for StudyPage {
                     }
                 } else {
                     self.indication = help;
-                    self.wrong_guesses.push(self.current_kana.clone());
+                    self.push_wrong_guess();
                 }
             }
             _ => self.user_input.handle_key_event(key_event),
@@ -153,13 +156,23 @@ impl StudyPage {
         false
     }
 
-    fn trigger_wrong_input(&mut self) {
-        self.indication = Some(Indication::WrongGuess);
-        self.wrong_guesses.push(self.current_kana.clone());
-        self.user_input.truncate();
+    fn push_good_guess(&mut self) {
+        if self.guesses.iter().any(|(g, _)| g.eq(&self.current_kana)) {
+            return;
+        }
+        self.guesses
+            .push((self.current_kana.clone(), GuessResultKind::Good));
     }
 
-    fn go_same_page(&self) -> Option<Page> {
+    fn push_wrong_guess(&mut self) {
+        if self.guesses.iter().any(|(g, _)| g.eq(&self.current_kana)) {
+            return;
+        }
+        self.guesses
+            .push((self.current_kana.clone(), GuessResultKind::Wrong));
+    }
+
+    fn go_same_page(&self) -> ReturnedPage {
         Page::go_study().page(self.clone()).call()
     }
 
@@ -199,15 +212,14 @@ impl StudyPage {
 
 impl Default for StudyPage {
     fn default() -> Self {
-        let mut kanas = crate::study::create_study_plan();
+        let mut kanas = crate::models::create_study_plan();
         let first_kana = kanas.pop().unwrap(); // panic should not happen
         Self {
             representation: KanaRepresentation::Hiragana,
             kanas,
             current_kana: first_kana,
             indication: None,
-            good_guesses: Vec::new(),
-            wrong_guesses: Vec::new(),
+            guesses: Vec::new(),
             user_input: TextState::new().with_focus(tui_prompts::FocusState::Focused),
             is_paused: false,
             // start immediately
