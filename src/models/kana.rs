@@ -342,14 +342,14 @@ impl std::fmt::Display for Kana {
     }
 }
 
-impl super::ValidateGuess for Kana {
-    fn validate_guess(&self, guess: &str) -> bool {
-        match (self, guess) {
+impl super::answer::ValidateAnswer for Kana {
+    fn validate_answer(&self, answer: &str) -> bool {
+        match (self, answer) {
             // allow some flexibility
             (Self::Chi, "chi" | "tchi") => true,
             (Self::Dji, "dji" | "ji") => true,
             // same as Display
-            (kana, guess) => kana.to_string() == guess,
+            (kana, answer) => kana.to_string() == answer,
         }
     }
 }
@@ -357,12 +357,12 @@ impl super::ValidateGuess for Kana {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::ValidateGuess;
+    use crate::models::answer::ValidateAnswer;
 
     #[test]
-    fn validate_guess_multiple() {
-        assert!(Kana::A.validate_guess("a"));
-        assert!(Kana::Chi.validate_guess("chi") && Kana::Chi.validate_guess("tchi"));
-        assert!(Kana::Dji.validate_guess("dji") && Kana::Dji.validate_guess("ji"));
+    fn validate_multiple_answers() {
+        assert!(Kana::A.validate_answer("a"));
+        assert!(Kana::Chi.validate_answer("chi") && Kana::Chi.validate_answer("tchi"));
+        assert!(Kana::Dji.validate_answer("dji") && Kana::Dji.validate_answer("ji"));
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     app::{IPage, Page, ReturnedPage},
-    models::{guess::GuessResultKind, kana::KanaRepresentation},
+    models::{answer::AnswerResult, kana::KanaRepresentation},
 };
 use crossterm::event::KeyEvent;
 use ratatui::{
@@ -14,8 +14,8 @@ use ratatui::{
 #[derive(Debug, Clone)]
 pub struct ResultPage {
     representation: KanaRepresentation,
-    good_guesses_count: usize,
-    wrong_guesses_count: usize,
+    good_answers_count: usize,
+    wrong_answers_count: usize,
     total_elapsed_time: u128,
 }
 
@@ -31,8 +31,8 @@ impl IPage for ResultPage {
         let congratulations_line = Line::from("You finished! \u{1F44F}").bold().centered();
         frame.render_widget(congratulations_line, area_top);
 
-        let kanas_count = self.good_guesses_count + self.wrong_guesses_count;
-        let correct_percent = (self.good_guesses_count as f64 / kanas_count as f64) * 100_f64;
+        let kanas_count = self.good_answers_count + self.wrong_answers_count;
+        let correct_percent = (self.good_answers_count as f64 / kanas_count as f64) * 100_f64;
         let kanas_count_line = Line::from(Vec::from([
             "You have completed your study plan of ".to_span(),
             kanas_count.to_span().bold(),
@@ -41,14 +41,14 @@ impl IPage for ResultPage {
             ".".to_span(),
         ]));
         let goods_line = Line::from(Vec::from([
-            "> good guesses: ".to_span(),
-            self.good_guesses_count.to_span(),
+            "> correct answers: ".to_span(),
+            self.good_answers_count.to_span(),
             "/".to_span(),
             kanas_count.to_span(),
         ]));
         let wrongs_line = Line::from(Vec::from([
-            "> wrong guesses: ".to_span(),
-            self.wrong_guesses_count.to_span(),
+            "> wrong answers: ".to_span(),
+            self.wrong_answers_count.to_span(),
             "/".to_span(),
             kanas_count.to_span(),
         ]));
@@ -93,15 +93,15 @@ impl From<super::study_page::StudyPage> for ResultPage {
         Self {
             total_elapsed_time: value.total_elapsed_time_ms(),
             representation: value.representation,
-            good_guesses_count: value
-                .guesses
+            good_answers_count: value
+                .answers
                 .iter()
-                .filter_map(|(_, result)| result.eq(&GuessResultKind::Good).then_some(()))
+                .filter_map(|(_, result)| result.eq(&AnswerResult::Good).then_some(()))
                 .count(),
-            wrong_guesses_count: value
-                .guesses
+            wrong_answers_count: value
+                .answers
                 .iter()
-                .filter_map(|(_, result)| result.eq(&GuessResultKind::Wrong).then_some(()))
+                .filter_map(|(_, result)| result.eq(&AnswerResult::Wrong).then_some(()))
                 .count(),
         }
     }

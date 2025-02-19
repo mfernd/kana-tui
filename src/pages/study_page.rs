@@ -1,9 +1,8 @@
 use crate::{
     app::{IPage, Page, ReturnedPage},
     models::{
-        guess::GuessResultKind,
+        answer::{AnswerResult, ValidateAnswer},
         kana::{Kana, KanaRepresentation},
-        ValidateGuess,
     },
     tui,
 };
@@ -22,7 +21,7 @@ use tui_prompts::{Prompt, State, TextPrompt, TextState};
 pub struct StudyPage {
     pub representation: KanaRepresentation,
     pub kanas: Vec<Kana>,
-    pub guesses: Vec<(Kana, GuessResultKind)>,
+    pub answers: Vec<(Kana, AnswerResult)>,
     current_kana: Kana,
     indication: Option<Indication>,
     user_input: TextState<'static>,
@@ -108,14 +107,14 @@ impl IPage for StudyPage {
         match (key_event.modifiers, key_event.code) {
             (_, KeyCode::Enter) => {
                 if self.is_input_valid() {
-                    self.push_good_guess();
+                    self.push_good_answer();
                     if !self.next_kana() {
                         self.finish_study_hook();
                         return Page::go_result().page(self.clone().into()).call();
                     }
                 } else {
-                    self.indication = Some(Indication::WrongGuess);
-                    self.push_wrong_guess();
+                    self.indication = Some(Indication::WrongAnswer);
+                    self.push_wrong_answer();
                     self.user_input.truncate();
                 }
             }
@@ -128,7 +127,7 @@ impl IPage for StudyPage {
                     }
                 } else {
                     self.indication = help;
-                    self.push_wrong_guess();
+                    self.push_wrong_answer();
                 }
             }
             _ => self.user_input.handle_key_event(key_event),
@@ -140,7 +139,7 @@ impl IPage for StudyPage {
 
 impl StudyPage {
     fn is_input_valid(&self) -> bool {
-        self.current_kana.validate_guess(self.user_input.value())
+        self.current_kana.validate_answer(self.user_input.value())
     }
 
     /// Update [PageData] with next kana.
@@ -156,20 +155,20 @@ impl StudyPage {
         false
     }
 
-    fn push_good_guess(&mut self) {
-        if self.guesses.iter().any(|(g, _)| g.eq(&self.current_kana)) {
+    fn push_good_answer(&mut self) {
+        if self.answers.iter().any(|(g, _)| g.eq(&self.current_kana)) {
             return;
         }
-        self.guesses
-            .push((self.current_kana.clone(), GuessResultKind::Good));
+        self.answers
+            .push((self.current_kana.clone(), AnswerResult::Good));
     }
 
-    fn push_wrong_guess(&mut self) {
-        if self.guesses.iter().any(|(g, _)| g.eq(&self.current_kana)) {
+    fn push_wrong_answer(&mut self) {
+        if self.answers.iter().any(|(g, _)| g.eq(&self.current_kana)) {
             return;
         }
-        self.guesses
-            .push((self.current_kana.clone(), GuessResultKind::Wrong));
+        self.answers
+            .push((self.current_kana.clone(), AnswerResult::Wrong));
     }
 
     fn go_same_page(&self) -> ReturnedPage {
@@ -219,7 +218,7 @@ impl Default for StudyPage {
             kanas,
             current_kana: first_kana,
             indication: None,
-            guesses: Vec::new(),
+            answers: Vec::new(),
             user_input: TextState::new().with_focus(tui_prompts::FocusState::Focused),
             is_paused: false,
             // start immediately
@@ -231,14 +230,14 @@ impl Default for StudyPage {
 
 #[derive(Debug, Clone, PartialEq)]
 enum Indication {
-    WrongGuess,
+    WrongAnswer,
     Help(Kana),
 }
 
 impl std::fmt::Display for Indication {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::WrongGuess => write!(f, "\u{274C}"),
+            Self::WrongAnswer => write!(f, "\u{274C}"),
             Self::Help(kana) => write!(f, "{}", kana),
         }
     }
