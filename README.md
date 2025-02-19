@@ -1,6 +1,6 @@
 # kana-tui
 
-Learn your kanas from your terminal.
+Learn your kanas from the terminal. 🗿
 
 ## Install
 
@@ -13,12 +13,14 @@ kana-tui
 ## Features
 
 - [x] Study kanas and get your results (goods/wrongs) at the end
-- [ ] Choose between hiragana and katakana
-- [ ] Choose specific kanas
-- [ ] Timer
+- [ ] Customize your study (choose your kanas)
+- [x] Timer
 - [ ] Stats
 - [ ] Study some words from JLPT?
 
 ## Credits
 
-Inspired from the great app: [realkana.com](https://realkana.com/).
+Inspired from the bests:
+
+- [realkana.com](https://realkana.com/)
+- [GOKANA from Bunpro](https://arcade.bunpro.jp/gokana/)

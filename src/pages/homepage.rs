@@ -4,10 +4,10 @@ use crate::{
 };
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
-    layout::{Constraint, Flex, Rect},
+    layout::{Constraint, Flex, Layout, Margin, Rect},
     style::Stylize,
-    text::Line,
-    widgets::Paragraph,
+    text::{Line, ToLine},
+    widgets::{Paragraph, Wrap},
     Frame,
 };
 use std::fmt::Display;
@@ -20,12 +20,25 @@ pub struct Homepage {
 
 impl IPage for Homepage {
     fn render(&mut self, frame: &mut Frame, main_area: Rect) {
-        let menu = MenuOption::render(&self.current_option);
-        let menu_area = tui::flex(
-            main_area,
-            (Flex::Center, Constraint::Length(MenuOption::width())),
-            (Flex::Center, Constraint::Length(MenuOption::height())),
+        let [slogan_area, menu_area] = Layout::vertical([Constraint::Fill(1), Constraint::Fill(1)])
+            .areas(main_area.inner(Margin::new(3, 0)));
+
+        let slogan = Paragraph::new(Vec::from(["Learn your kanas from the terminal. \u{1F5FF}"
+            .to_line()
+            .gray()
+            .italic()
+            .centered()]))
+        .wrap(Wrap { trim: true });
+        frame.render_widget(
+            slogan,
+            tui::flex(
+                slogan_area,
+                (Flex::Center, Constraint::Fill(1)),
+                (Flex::Center, Constraint::Length(2)),
+            ),
         );
+
+        let menu = MenuOption::render(&self.current_option).centered();
         frame.render_widget(menu, menu_area);
     }
 
@@ -82,24 +95,13 @@ impl MenuOption {
         }
         Paragraph::new(options)
     }
-
-    fn width() -> u16 {
-        MenuOption::iter()
-            .map(|o| o.to_string().len())
-            .max()
-            .unwrap_or(0) as u16
-    }
-
-    fn height() -> u16 {
-        (MenuOption::COUNT as u16) * 2 - 1
-    }
 }
 
 impl Display for MenuOption {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Start => write!(f, "Start"),
-            Self::Quit => write!(f, "Quit"),
+            Self::Start => write!(f, "Study"),
+            Self::Quit => write!(f, "Exit"),
         }
     }
 }
