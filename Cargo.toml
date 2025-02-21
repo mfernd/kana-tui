@@ -8,11 +8,14 @@ edition = "2021"
 [dependencies]
 bon = "3.3"
 crossterm = { version = "0.28", features = ["event-stream"] }
+dirs = "6.0"
 enum_dispatch = "0.3"
 futures = "0.3"
 rand = { version = "0.9", features = ["small_rng"] }
 ratatui = "0.29"
+serde = { version = "1.0", features = ["derive"] }
 strum = { version = "0.27", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
+toml = "0.8"
 tui-popup = "0.6.0"
 tui-prompts = "0.5.0"
