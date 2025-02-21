@@ -1,23 +1,22 @@
+use super::{ConfigPage, StudyPage};
 use crate::{
     app::{IPage, PageEvent},
     tui,
+    widgets::{Menu, MenuState},
 };
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     layout::{Constraint, Flex, Layout, Margin, Rect},
     style::Stylize,
-    text::{Line, ToLine},
+    text::ToLine,
     widgets::{Paragraph, Wrap},
     Frame,
 };
-use std::fmt::Display;
-use strum::{EnumCount, EnumIter, IntoEnumIterator};
-
-use super::{ConfigPage, StudyPage};
+use strum::{EnumCount, IntoStaticStr, VariantArray};
 
 #[derive(Debug, Clone, Default)]
 pub struct Homepage {
-    current_option: MenuOption,
+    menu_state: MenuState,
 }
 
 impl IPage for Homepage {
@@ -40,22 +39,27 @@ impl IPage for Homepage {
             ),
         );
 
-        let menu = MenuOption::render(&self.current_option).centered();
-        frame.render_widget(menu, menu_area);
+        let menu = Menu::new(MenuOption::to_vec_str()).centered();
+        frame.render_stateful_widget(menu, menu_area, &mut self.menu_state);
     }
 
     fn handle_key_events(&mut self, key_event: KeyEvent) -> PageEvent {
-        match (&self.current_option, key_event.code) {
+        let menu_option = &MenuOption::VARIANTS[self.menu_state.current_option];
+        match (menu_option, key_event.code) {
             (_, KeyCode::Esc | KeyCode::Char('q')) => return PageEvent::QuitApp,
             (MenuOption::Quit, KeyCode::Enter) => return PageEvent::QuitApp,
             (MenuOption::Study, KeyCode::Enter) => {
-                return PageEvent::Navigate(StudyPage::default().into())
+                return PageEvent::Navigate(StudyPage::default().into());
             }
             (MenuOption::Configure, KeyCode::Enter) => {
-                return PageEvent::Navigate(ConfigPage {}.into())
+                return PageEvent::Navigate(ConfigPage {}.into());
             }
-            (_, KeyCode::Right | KeyCode::Down) => self.next_option(),
-            (_, KeyCode::Left | KeyCode::Up) => self.previous_option(),
+            (_, KeyCode::Right | KeyCode::Down) => {
+                self.menu_state.next_option(MenuOption::COUNT - 1);
+            }
+            (_, KeyCode::Left | KeyCode::Up) => {
+                self.menu_state.previous_option(MenuOption::COUNT - 1);
+            }
             _ => {}
         }
 
@@ -63,56 +67,18 @@ impl IPage for Homepage {
     }
 }
 
-impl Homepage {
-    fn next_option(&mut self) {
-        match self.current_option {
-            MenuOption::Study => self.current_option = MenuOption::Configure,
-            MenuOption::Configure => self.current_option = MenuOption::Quit,
-            MenuOption::Quit => self.current_option = MenuOption::Study,
-        }
-    }
-
-    fn previous_option(&mut self) {
-        match self.current_option {
-            MenuOption::Study => self.current_option = MenuOption::Quit,
-            MenuOption::Configure => self.current_option = MenuOption::Study,
-            MenuOption::Quit => self.current_option = MenuOption::Configure,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default, PartialEq, EnumIter, EnumCount)]
+#[derive(Debug, Clone, EnumCount, VariantArray, IntoStaticStr)]
 enum MenuOption {
-    #[default]
     Study,
     Configure,
     Quit,
 }
 
 impl MenuOption {
-    fn render(current_option: &MenuOption) -> Paragraph {
-        let mut options: Vec<Line> = Vec::new();
-        for (i, option) in MenuOption::iter().enumerate() {
-            let l = if option.eq(current_option) {
-                Line::from(option.to_string()).bold().underlined()
-            } else {
-                Line::from(option.to_string())
-            };
-            options.push(l);
-            if i < MenuOption::COUNT - 1 {
-                options.push(Line::from(""));
-            }
-        }
-        Paragraph::new(options)
-    }
-}
-
-impl Display for MenuOption {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Study => write!(f, "Study"),
-            Self::Configure => write!(f, "Configure"),
-            Self::Quit => write!(f, "Exit"),
-        }
+    fn to_vec_str<'a>() -> Vec<&'a str> {
+        Vec::from(MenuOption::VARIANTS)
+            .into_iter()
+            .map(MenuOption::into)
+            .collect()
     }
 }
