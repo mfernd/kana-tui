@@ -1,6 +1,5 @@
 use strum::EnumIter;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum KanaRepresentation {
     Hiragana,
