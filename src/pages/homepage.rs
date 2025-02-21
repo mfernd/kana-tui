@@ -46,9 +46,12 @@ impl IPage for Homepage {
         match (&self.current_option, key_event.code) {
             (_, KeyCode::Esc | KeyCode::Char('q')) => return None,
             (MenuOption::Quit, KeyCode::Enter) => return None,
-            (MenuOption::Start, KeyCode::Enter) => return Page::go_study().call(),
-            (_, KeyCode::Left | KeyCode::Up) => self.previous_option(),
+            (MenuOption::Study, KeyCode::Enter) => return Page::go_study().call(),
+            (MenuOption::Configure, KeyCode::Enter) => {
+                return Page::go_config().page(super::ConfigPage {}).call()
+            }
             (_, KeyCode::Right | KeyCode::Down) => self.next_option(),
+            (_, KeyCode::Left | KeyCode::Up) => self.previous_option(),
             _ => {}
         }
 
@@ -59,15 +62,17 @@ impl IPage for Homepage {
 impl Homepage {
     fn next_option(&mut self) {
         match self.current_option {
-            MenuOption::Start => self.current_option = MenuOption::Quit,
-            MenuOption::Quit => self.current_option = MenuOption::Start,
+            MenuOption::Study => self.current_option = MenuOption::Configure,
+            MenuOption::Configure => self.current_option = MenuOption::Quit,
+            MenuOption::Quit => self.current_option = MenuOption::Study,
         }
     }
 
     fn previous_option(&mut self) {
         match self.current_option {
-            MenuOption::Start => self.current_option = MenuOption::Quit,
-            MenuOption::Quit => self.current_option = MenuOption::Start,
+            MenuOption::Study => self.current_option = MenuOption::Quit,
+            MenuOption::Configure => self.current_option = MenuOption::Study,
+            MenuOption::Quit => self.current_option = MenuOption::Configure,
         }
     }
 }
@@ -75,7 +80,8 @@ impl Homepage {
 #[derive(Debug, Clone, Default, PartialEq, EnumIter, EnumCount)]
 enum MenuOption {
     #[default]
-    Start,
+    Study,
+    Configure,
     Quit,
 }
 
@@ -100,7 +106,8 @@ impl MenuOption {
 impl Display for MenuOption {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Start => write!(f, "Study"),
+            Self::Study => write!(f, "Study"),
+            Self::Configure => write!(f, "Configure"),
             Self::Quit => write!(f, "Exit"),
         }
     }

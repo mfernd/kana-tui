@@ -43,6 +43,7 @@ pub trait IPage: std::fmt::Debug {
 #[enum_dispatch(IPage)]
 pub enum Page {
     Homepage(pages::Homepage),
+    ConfigPage(pages::ConfigPage),
     StudyPage(pages::StudyPage),
     ResultPage(pages::ResultPage),
 }
@@ -54,6 +55,11 @@ impl Page {
     #[builder]
     pub fn go_home(page: Option<pages::Homepage>) -> ReturnedPage {
         Some(page.unwrap_or_default().into())
+    }
+
+    #[builder]
+    pub fn go_config(page: pages::ConfigPage) -> ReturnedPage {
+        Some(page.into())
     }
 
     #[builder]
