@@ -1,4 +1,4 @@
-use crate::pages;
+use crate::{config::Config, pages};
 use bon::bon;
 use crossterm::event::KeyEvent;
 use enum_dispatch::enum_dispatch;
@@ -8,20 +8,16 @@ use ratatui::{layout::Rect, Frame};
 pub struct App {
     pub running: bool,
     pub current_page: Page,
-}
-
-impl Default for App {
-    fn default() -> Self {
-        Self {
-            running: true,
-            current_page: Page::Homepage(pages::Homepage::default()),
-        }
-    }
+    pub config: Config,
 }
 
 impl App {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(config: Config) -> Self {
+        Self {
+            running: true,
+            current_page: Page::Homepage(pages::Homepage::default()),
+            config,
+        }
     }
 
     /// Handles the tick event of the terminal.
@@ -30,10 +26,6 @@ impl App {
     /// Set running to false to quit the application.
     pub fn quit(&mut self) {
         self.running = false;
-    }
-
-    pub fn go_to(&mut self, new_page: Page) {
-        self.current_page = new_page;
     }
 }
 
