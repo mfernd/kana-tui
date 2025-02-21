@@ -1,5 +1,5 @@
 use crate::{
-    app::{IPage, Page, ReturnedPage},
+    app::{IPage, PageEvent},
     models::{answer::AnswerResult, kana::KanaRepresentation},
 };
 use crossterm::event::KeyEvent;
@@ -10,6 +10,8 @@ use ratatui::{
     widgets::{Paragraph, Wrap},
     Frame,
 };
+
+use super::Homepage;
 
 #[derive(Debug, Clone)]
 pub struct ResultPage {
@@ -70,8 +72,8 @@ impl IPage for ResultPage {
         frame.render_widget(info, area_bottom);
     }
 
-    fn handle_key_events(&mut self, _: KeyEvent) -> ReturnedPage {
-        Page::go_home().call()
+    fn handle_key_events(&mut self, _: KeyEvent) -> PageEvent {
+        PageEvent::Navigate(Homepage::default().into())
     }
 }
 

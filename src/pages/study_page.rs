@@ -1,5 +1,5 @@
 use crate::{
-    app::{IPage, Page, ReturnedPage},
+    app::{IPage, PageEvent},
     models::{
         answer::{AnswerResult, ValidateAnswer},
         kana::{Kana, KanaRepresentation},
@@ -16,6 +16,8 @@ use ratatui::{
 use std::time::Instant;
 use tui_popup::Popup;
 use tui_prompts::{Prompt, State, TextPrompt, TextState};
+
+use super::{Homepage, ResultPage};
 
 #[derive(Debug, Clone)]
 pub struct StudyPage {
@@ -101,9 +103,9 @@ impl IPage for StudyPage {
         }
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent) -> ReturnedPage {
+    fn handle_key_events(&mut self, key_event: KeyEvent) -> PageEvent {
         if !self.is_paused && key_event.code == KeyCode::Esc {
-            return Page::go_home().call();
+            return PageEvent::Navigate(Homepage::default().into());
         }
 
         if self.is_paused
@@ -114,7 +116,7 @@ impl IPage for StudyPage {
             self.is_paused = !self.is_paused;
             self.reset_timer();
             // early return to prevent all other events
-            return self.go_same_page();
+            return PageEvent::Nothing;
         }
 
         // handle keyboard events
@@ -124,7 +126,7 @@ impl IPage for StudyPage {
                     self.push_good_answer();
                     if !self.next_kana() {
                         self.finish_study_hook();
-                        return Page::go_result().page(self.clone().into()).call();
+                        return PageEvent::Navigate(ResultPage::from(self.clone()).into());
                     }
                 } else {
                     self.indication = Some(Indication::WrongAnswer);
@@ -137,7 +139,7 @@ impl IPage for StudyPage {
                 if self.indication.eq(&help) {
                     if !self.next_kana() {
                         self.finish_study_hook();
-                        return Page::go_result().page(self.clone().into()).call();
+                        return PageEvent::Navigate(ResultPage::from(self.clone()).into());
                     }
                 } else {
                     self.indication = help;
@@ -147,7 +149,7 @@ impl IPage for StudyPage {
             _ => self.user_input.handle_key_event(key_event),
         };
 
-        self.go_same_page()
+        PageEvent::Nothing
     }
 }
 
@@ -183,10 +185,6 @@ impl StudyPage {
         }
         self.answers
             .push((self.current_kana.clone(), AnswerResult::Wrong));
-    }
-
-    fn go_same_page(&self) -> ReturnedPage {
-        Page::go_study().page(self.clone()).call()
     }
 
     fn finish_study_hook(&mut self) {

@@ -1,5 +1,5 @@
 use crate::{
-    app::{IPage, Page, ReturnedPage},
+    app::{IPage, PageEvent},
     tui,
 };
 use crossterm::event::{KeyCode, KeyEvent};
@@ -12,6 +12,8 @@ use ratatui::{
 };
 use std::fmt::Display;
 use strum::{EnumCount, EnumIter, IntoEnumIterator};
+
+use super::{ConfigPage, StudyPage};
 
 #[derive(Debug, Clone, Default)]
 pub struct Homepage {
@@ -42,20 +44,22 @@ impl IPage for Homepage {
         frame.render_widget(menu, menu_area);
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent) -> ReturnedPage {
+    fn handle_key_events(&mut self, key_event: KeyEvent) -> PageEvent {
         match (&self.current_option, key_event.code) {
-            (_, KeyCode::Esc | KeyCode::Char('q')) => return None,
-            (MenuOption::Quit, KeyCode::Enter) => return None,
-            (MenuOption::Study, KeyCode::Enter) => return Page::go_study().call(),
+            (_, KeyCode::Esc | KeyCode::Char('q')) => return PageEvent::QuitApp,
+            (MenuOption::Quit, KeyCode::Enter) => return PageEvent::QuitApp,
+            (MenuOption::Study, KeyCode::Enter) => {
+                return PageEvent::Navigate(StudyPage::default().into())
+            }
             (MenuOption::Configure, KeyCode::Enter) => {
-                return Page::go_config().page(super::ConfigPage {}).call()
+                return PageEvent::Navigate(ConfigPage {}.into())
             }
             (_, KeyCode::Right | KeyCode::Down) => self.next_option(),
             (_, KeyCode::Left | KeyCode::Up) => self.previous_option(),
             _ => {}
         }
 
-        Page::go_home().page(self.clone()).call()
+        PageEvent::Nothing
     }
 }
 

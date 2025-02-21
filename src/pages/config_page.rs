@@ -1,7 +1,6 @@
+use crate::app::{IPage, PageEvent};
 use crossterm::event::KeyEvent;
 use ratatui::{layout::Rect, Frame};
-
-use crate::app::{IPage, ReturnedPage};
 
 #[derive(Debug, Clone)]
 pub struct ConfigPage;
@@ -11,7 +10,7 @@ impl IPage for ConfigPage {
         todo!()
     }
 
-    fn handle_key_events(&mut self, _: KeyEvent) -> ReturnedPage {
-        todo!()
+    fn handle_key_events(&mut self, _: KeyEvent) -> PageEvent {
+        PageEvent::Nothing
     }
 }

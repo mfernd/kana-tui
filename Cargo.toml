@@ -6,7 +6,6 @@ license = "MIT"
 edition = "2021"
 
 [dependencies]
-bon = "3.3"
 crossterm = { version = "0.28", features = ["event-stream"] }
 dirs = "6.0"
 enum_dispatch = "0.3"
