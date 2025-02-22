@@ -47,12 +47,12 @@ impl IPage for Homepage {
         let menu_option = &MenuOption::VARIANTS[self.menu_state.current_option];
         match (menu_option, key_event.code) {
             (_, KeyCode::Esc | KeyCode::Char('q')) => return PageEvent::QuitApp,
-            (MenuOption::Quit, KeyCode::Enter) => return PageEvent::QuitApp,
-            (MenuOption::Study, KeyCode::Enter) => {
+            (MenuOption::Quit, KeyCode::Enter | KeyCode::Char(' ')) => return PageEvent::QuitApp,
+            (MenuOption::Study, KeyCode::Enter | KeyCode::Char(' ')) => {
                 return PageEvent::Navigate(StudyPage::default().into());
             }
-            (MenuOption::Configure, KeyCode::Enter) => {
-                return PageEvent::Navigate(ConfigPage {}.into());
+            (MenuOption::Configure, KeyCode::Enter | KeyCode::Char(' ')) => {
+                return PageEvent::Navigate(ConfigPage::default().into());
             }
             (_, KeyCode::Right | KeyCode::Down) => {
                 self.menu_state.next_option(MenuOption::COUNT - 1);
