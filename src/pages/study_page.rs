@@ -1,3 +1,4 @@
+use super::{Homepage, ResultPage};
 use crate::{
     app::{IPage, PageEvent},
     models::{
@@ -16,8 +17,6 @@ use ratatui::{
 use std::time::Instant;
 use tui_popup::Popup;
 use tui_prompts::{Prompt, State, TextPrompt, TextState};
-
-use super::{Homepage, ResultPage};
 
 #[derive(Debug, Clone)]
 pub struct StudyPage {

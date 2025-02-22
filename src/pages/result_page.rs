@@ -1,3 +1,4 @@
+use super::Homepage;
 use crate::{
     app::{IPage, PageEvent},
     models::{answer::AnswerResult, kana::KanaRepresentation},
@@ -10,8 +11,6 @@ use ratatui::{
     widgets::{Paragraph, Wrap},
     Frame,
 };
-
-use super::Homepage;
 
 #[derive(Debug, Clone)]
 pub struct ResultPage {
