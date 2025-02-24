@@ -9,12 +9,18 @@ pub struct App {
     pub current_page: Page,
 }
 
-impl App {
-    pub fn new() -> Self {
+impl Default for App {
+    fn default() -> Self {
         Self {
             running: true,
             current_page: Page::Homepage(pages::Homepage::default()),
         }
+    }
+}
+
+impl App {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Handles the tick event of the terminal.

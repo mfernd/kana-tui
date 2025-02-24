@@ -42,7 +42,7 @@ impl<'a> Button<'a> {
     }
 }
 
-impl<'a> Widget for Button<'a> {
+impl Widget for Button<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let mut btn_label = format!(" {} ", self.label);
         if self.is_hover {
