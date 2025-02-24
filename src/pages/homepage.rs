@@ -1,6 +1,7 @@
 use super::{ConfigPage, StudyPage};
 use crate::{
     app::{IPage, PageEvent},
+    config::Config,
     tui,
     widgets::{Menu, MenuState},
 };
@@ -20,7 +21,7 @@ pub struct Homepage {
 }
 
 impl IPage for Homepage {
-    fn render(&mut self, frame: &mut Frame, main_area: Rect) {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect, _: &Config) {
         let [slogan_area, menu_area] = Layout::vertical([Constraint::Fill(1), Constraint::Fill(1)])
             .areas(main_area.inner(Margin::new(3, 0)));
 
@@ -43,7 +44,7 @@ impl IPage for Homepage {
         frame.render_stateful_widget(menu, menu_area, &mut self.menu_state);
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent) -> PageEvent {
+    fn handle_key_events(&mut self, key_event: KeyEvent, _: &mut Config) -> PageEvent {
         let menu_option = &MenuOption::VARIANTS[self.menu_state.current_option];
         match (menu_option, key_event.code) {
             (_, KeyCode::Esc | KeyCode::Char('q')) => return PageEvent::QuitApp,

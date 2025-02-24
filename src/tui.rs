@@ -1,4 +1,5 @@
 use crate::app::{App, IPage};
+use crate::config::Config;
 use crate::event::EventHandler;
 use crate::AppResult;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
@@ -50,7 +51,7 @@ impl<B: Backend> Tui<B> {
 
     /// Draw the terminal interface by [`rendering`] the widgets.
     /// Corresponding to each page render function.
-    pub fn draw(&mut self, app: &mut App) -> AppResult<()> {
+    pub fn draw(&mut self, app: &mut App, config: &Config) -> AppResult<()> {
         self.terminal.draw(|frame| {
             let main_area = flex(
                 frame.area(),
@@ -60,7 +61,7 @@ impl<B: Backend> Tui<B> {
             render_header_block(frame, main_area);
             // to prevent overlap with the header block
             let inner_main_area = main_area.inner(Margin::new(1, 1));
-            app.current_page.render(frame, inner_main_area);
+            app.current_page.render(frame, inner_main_area, config);
         })?;
         Ok(())
     }

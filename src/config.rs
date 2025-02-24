@@ -1,6 +1,5 @@
-use std::path::PathBuf;
-
 use crate::models;
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub enum ConfigError {

@@ -10,8 +10,8 @@ use std::{io, path::PathBuf};
 
 #[tokio::main]
 async fn main() -> kana_tui::AppResult<()> {
-    let config = get_or_create_default_config();
-    let mut app = App::new(config);
+    let mut config = get_or_create_default_config();
+    let mut app = App::new();
 
     let backend = CrosstermBackend::new(io::stdout());
     let terminal = Terminal::new(backend)?;
@@ -20,10 +20,10 @@ async fn main() -> kana_tui::AppResult<()> {
     tui.init()?;
 
     while app.running {
-        tui.draw(&mut app)?;
+        tui.draw(&mut app, &config)?;
         match tui.events.next().await? {
             Event::Tick => app.tick(),
-            Event::Key(key_event) => handle_key_events(key_event, &mut app)?,
+            Event::Key(key_event) => handle_key_events(key_event, &mut app, &mut config)?,
             _ => {}
         }
     }

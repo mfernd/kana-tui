@@ -1,6 +1,7 @@
 use super::Homepage;
 use crate::{
     app::{IPage, PageEvent},
+    config::Config,
     widgets::Button,
 };
 use crossterm::event::{KeyCode, KeyEvent};
@@ -17,7 +18,7 @@ pub struct ConfigPage {
 }
 
 impl IPage for ConfigPage {
-    fn render(&mut self, frame: &mut Frame, main_area: Rect) {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect, _: &Config) {
         let [title_area, _, bottom_area] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Fill(1),
@@ -45,7 +46,7 @@ impl IPage for ConfigPage {
         );
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent) -> PageEvent {
+    fn handle_key_events(&mut self, key_event: KeyEvent, _: &mut Config) -> PageEvent {
         if key_event.code == KeyCode::Esc {
             return PageEvent::Navigate(Homepage::default().into());
         }

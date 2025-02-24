@@ -1,6 +1,7 @@
 use super::Homepage;
 use crate::{
     app::{IPage, PageEvent},
+    config::Config,
     models::{answer::AnswerResult, kana::KanaRepresentation},
 };
 use crossterm::event::KeyEvent;
@@ -21,7 +22,7 @@ pub struct ResultPage {
 }
 
 impl IPage for ResultPage {
-    fn render(&mut self, frame: &mut Frame, main_area: Rect) {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect, _: &Config) {
         let [area_top, area_middle, area_bottom] = Layout::vertical([
             Constraint::Length(3),
             Constraint::Fill(1),
@@ -71,7 +72,7 @@ impl IPage for ResultPage {
         frame.render_widget(info, area_bottom);
     }
 
-    fn handle_key_events(&mut self, _: KeyEvent) -> PageEvent {
+    fn handle_key_events(&mut self, _: KeyEvent, _: &mut Config) -> PageEvent {
         PageEvent::Navigate(Homepage::default().into())
     }
 }

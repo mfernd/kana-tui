@@ -1,6 +1,7 @@
 use super::{Homepage, ResultPage};
 use crate::{
     app::{IPage, PageEvent},
+    config::Config,
     models::{
         answer::{AnswerResult, ValidateAnswer},
         kana::{Kana, KanaRepresentation},
@@ -36,7 +37,7 @@ pub struct StudyPage {
 }
 
 impl IPage for StudyPage {
-    fn render(&mut self, frame: &mut Frame, main_area: Rect) {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect, _: &Config) {
         let [timer_area, kana_area, indication_area, input_area, progress_area] =
             Layout::vertical([
                 Constraint::Length(3),
@@ -102,7 +103,7 @@ impl IPage for StudyPage {
         }
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent) -> PageEvent {
+    fn handle_key_events(&mut self, key_event: KeyEvent, _: &mut Config) -> PageEvent {
         if !self.is_paused && key_event.code == KeyCode::Esc {
             return PageEvent::Navigate(Homepage::default().into());
         }

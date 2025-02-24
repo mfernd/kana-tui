@@ -7,15 +7,13 @@ use ratatui::{layout::Rect, Frame};
 pub struct App {
     pub running: bool,
     pub current_page: Page,
-    pub config: Config,
 }
 
 impl App {
-    pub fn new(config: Config) -> Self {
+    pub fn new() -> Self {
         Self {
             running: true,
             current_page: Page::Homepage(pages::Homepage::default()),
-            config,
         }
     }
 
@@ -38,9 +36,9 @@ pub enum PageEvent {
 #[enum_dispatch]
 pub trait IPage: std::fmt::Debug {
     /// Used when rendering the page.
-    fn render(&mut self, frame: &mut Frame, main_area: Rect);
+    fn render(&mut self, frame: &mut Frame, main_area: Rect, config: &Config);
     /// To update the content of the page with key events.
-    fn handle_key_events(&mut self, key_event: KeyEvent) -> PageEvent;
+    fn handle_key_events(&mut self, key_event: KeyEvent, config: &mut Config) -> PageEvent;
 }
 
 #[derive(Debug)]
