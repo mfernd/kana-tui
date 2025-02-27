@@ -32,7 +32,7 @@ impl IPage for ConfigPage {
 
         let writing_system_field = self.writing_system_field(
             middle_area.width as usize,
-            self.focused_field == ConfigField::StudyModeField,
+            self.focused_field == ConfigField::WritingSystemField,
         );
         let field_list = List::new(Vec::from([writing_system_field]));
         frame.render_widget(field_list, middle_area);
@@ -114,7 +114,7 @@ impl ConfigPage {
 #[derive(Debug, Clone, Default, PartialEq)]
 enum ConfigField {
     #[default]
-    StudyModeField,
+    WritingSystemField,
     Action(BottomAction),
 }
 
@@ -133,14 +133,14 @@ impl ConfigField {
 
     fn up(&self) -> Option<Self> {
         match self {
-            ConfigField::StudyModeField => None,
-            ConfigField::Action(_) => Some(ConfigField::StudyModeField),
+            ConfigField::WritingSystemField => None,
+            ConfigField::Action(_) => Some(ConfigField::WritingSystemField),
         }
     }
 
     fn right(&self) -> Option<Self> {
         match self {
-            ConfigField::StudyModeField => Some(ConfigField::Action(BottomAction::Save)),
+            ConfigField::WritingSystemField => Some(ConfigField::Action(BottomAction::Save)),
             ConfigField::Action(BottomAction::Cancel) => {
                 Some(ConfigField::Action(BottomAction::Save))
             }
@@ -152,22 +152,22 @@ impl ConfigField {
 
     fn down(&self) -> Option<Self> {
         match self {
-            ConfigField::StudyModeField => Some(ConfigField::Action(BottomAction::Save)),
+            ConfigField::WritingSystemField => Some(ConfigField::Action(BottomAction::Save)),
             ConfigField::Action(_) => None,
         }
     }
 
     fn left(&self) -> Option<Self> {
         match self {
-            ConfigField::StudyModeField => None,
+            ConfigField::WritingSystemField => None,
             ConfigField::Action(_) => self.right(),
         }
     }
 
     fn tab(&self) -> Option<Self> {
         match self {
-            ConfigField::StudyModeField => self.down(),
-            ConfigField::Action(BottomAction::Cancel) => Some(ConfigField::StudyModeField),
+            ConfigField::WritingSystemField => self.down(),
+            ConfigField::Action(BottomAction::Cancel) => Some(ConfigField::WritingSystemField),
             ConfigField::Action(BottomAction::Save) => self.left(),
         }
     }

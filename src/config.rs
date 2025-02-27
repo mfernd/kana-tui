@@ -11,7 +11,7 @@ pub enum ConfigError {
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
 pub struct Config {
-    study_mode: StudyMode,
+    writing_system: WritingSystem,
 }
 
 impl Config {
@@ -27,13 +27,13 @@ impl Config {
 }
 
 #[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
-pub enum StudyMode {
+pub enum WritingSystem {
     #[default]
     Hiragana,
     Katakana,
 }
 
-impl From<models::kana::KanaRepresentation> for StudyMode {
+impl From<models::kana::KanaRepresentation> for WritingSystem {
     fn from(value: models::kana::KanaRepresentation) -> Self {
         match value {
             models::kana::KanaRepresentation::Hiragana => Self::Hiragana,
