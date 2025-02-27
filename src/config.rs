@@ -9,24 +9,48 @@ pub enum ConfigError {
     FailedToSave(std::io::Error),
 }
 
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Config {
-    writing_system: WritingSystem,
+    pub writing_system: WritingSystem,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        let config_path = Self::get_config_path();
+        Config::parse_from_path(&config_path).unwrap_or_else(|_| {
+            let default_config = Config {
+                writing_system: WritingSystem::default(),
+            };
+            default_config.save().expect("Could not save config");
+            default_config
+        })
+    }
 }
 
 impl Config {
-    pub fn parse_from_path(config_path: &PathBuf) -> Result<Self, ConfigError> {
+    fn parse_from_path(config_path: &PathBuf) -> Result<Self, ConfigError> {
         let file = std::fs::read_to_string(config_path).map_err(|_| ConfigError::ConfigNotFound)?;
         toml::from_str(&file).map_err(ConfigError::InvalidConfig)
     }
 
-    pub fn save(&self, config_path: &PathBuf) -> Result<(), ConfigError> {
-        let toml = toml::to_string_pretty(self).map_err(ConfigError::SerializationError)?;
-        std::fs::write(config_path, toml).map_err(ConfigError::FailedToSave)
+    pub fn save(&self) -> Result<(), ConfigError> {
+        let toml = toml::to_string_pretty(&self).map_err(ConfigError::SerializationError)?;
+        std::fs::write(Self::get_config_path(), toml).map_err(ConfigError::FailedToSave)
+    }
+
+    fn get_config_path() -> PathBuf {
+        let config_folder = dirs::config_dir()
+            .expect("Config folder for your OS not found")
+            .join(env!("CARGO_PKG_NAME"));
+        if !config_folder.exists() {
+            std::fs::create_dir_all(&config_folder).expect("Could not create config folder");
+        }
+
+        config_folder.join("config.toml")
     }
 }
 
-#[derive(Debug, Default, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Default, serde::Deserialize, serde::Serialize)]
 pub enum WritingSystem {
     #[default]
     Hiragana,
@@ -38,6 +62,15 @@ impl From<models::kana::KanaRepresentation> for WritingSystem {
         match value {
             models::kana::KanaRepresentation::Hiragana => Self::Hiragana,
             models::kana::KanaRepresentation::Katakana => Self::Katakana,
+        }
+    }
+}
+
+impl From<WritingSystem> for models::kana::KanaRepresentation {
+    fn from(value: WritingSystem) -> Self {
+        match value {
+            WritingSystem::Hiragana => Self::Hiragana,
+            WritingSystem::Katakana => Self::Katakana,
         }
     }
 }

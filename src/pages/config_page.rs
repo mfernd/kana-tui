@@ -1,7 +1,8 @@
 use super::Homepage;
 use crate::{
     app::{IPage, PageEvent},
-    config::Config,
+    config::{Config, WritingSystem},
+    models::kana::KanaRepresentation,
     widgets::Button,
 };
 use crossterm::event::{KeyCode, KeyEvent};
@@ -13,9 +14,19 @@ use ratatui::{
     Frame,
 };
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug)]
 pub struct ConfigPage {
     focused_field: ConfigField,
+    writing_system: WritingSystem,
+}
+
+impl From<Config> for ConfigPage {
+    fn from(value: Config) -> Self {
+        Self {
+            focused_field: ConfigField::default(),
+            writing_system: value.writing_system,
+        }
+    }
 }
 
 impl IPage for ConfigPage {
@@ -40,17 +51,25 @@ impl IPage for ConfigPage {
         self.render_bottom_actions(frame, bottom_area);
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent, _: &mut Config) -> PageEvent {
+    fn handle_key_events(&mut self, key_event: KeyEvent, config: &mut Config) -> PageEvent {
         if key_event.code == KeyCode::Esc {
             return PageEvent::Navigate(Homepage::default().into());
         }
 
         match (&self.focused_field, key_event.code) {
+            (ConfigField::WritingSystemField, KeyCode::Enter | KeyCode::Char(' ')) => {
+                self.writing_system = match self.writing_system {
+                    WritingSystem::Hiragana => WritingSystem::Katakana,
+                    WritingSystem::Katakana => WritingSystem::Hiragana,
+                }
+            }
             (ConfigField::Action(BottomAction::Cancel), KeyCode::Enter | KeyCode::Char(' ')) => {
                 return PageEvent::Navigate(Homepage::default().into());
             }
             (ConfigField::Action(BottomAction::Save), KeyCode::Enter | KeyCode::Char(' ')) => {
-                // TODO should save config
+                // updating fields (better way to do it?)
+                config.writing_system = self.writing_system.clone();
+                let _ = config.save(); // should show popup if failed to save?
                 return PageEvent::Navigate(Homepage::default().into());
             }
             // Handle arrows and tab button updating current field. (Should always be last?)
@@ -68,7 +87,8 @@ impl IPage for ConfigPage {
 impl ConfigPage {
     fn writing_system_field(&self, width: usize, is_focused: bool) -> Line {
         let label = Span::from("Writing system");
-        let mut input = Span::from("\u{2BC7} Hiragana \u{2BC8}").bold();
+        let input_value = KanaRepresentation::from(self.writing_system.clone()).to_string();
+        let mut input = Span::from(format!("\u{2BC7} {} \u{2BC8}", input_value)).bold();
         if is_focused {
             input = input.black().on_light_red();
         } else {
@@ -111,7 +131,7 @@ impl ConfigPage {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 enum ConfigField {
     #[default]
     WritingSystemField,

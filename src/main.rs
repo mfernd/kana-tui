@@ -6,11 +6,11 @@ use kana_tui::{
     tui::Tui,
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
-use std::{io, path::PathBuf};
+use std::io;
 
 #[tokio::main]
 async fn main() -> kana_tui::AppResult<()> {
-    let mut config = get_or_create_default_config();
+    let mut config = Config::default();
     let mut app = App::new();
 
     let backend = CrosstermBackend::new(io::stdout());
@@ -30,26 +30,4 @@ async fn main() -> kana_tui::AppResult<()> {
 
     tui.exit()?;
     Ok(())
-}
-
-fn get_or_create_default_config() -> Config {
-    let config_path = get_config_path();
-    Config::parse_from_path(&config_path).unwrap_or_else(|_| {
-        let default_config = Config::default();
-        default_config
-            .save(&config_path)
-            .expect("Could not save config");
-        default_config
-    })
-}
-
-fn get_config_path() -> PathBuf {
-    let config_folder = dirs::config_dir()
-        .expect("Config folder for your OS not found")
-        .join(env!("CARGO_PKG_NAME"));
-    if !config_folder.exists() {
-        std::fs::create_dir_all(&config_folder).expect("Could not create config folder");
-    }
-
-    config_folder.join("config.toml")
 }

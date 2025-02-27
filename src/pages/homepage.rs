@@ -44,7 +44,7 @@ impl IPage for Homepage {
         frame.render_stateful_widget(menu, menu_area, &mut self.menu_state);
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent, _: &mut Config) -> PageEvent {
+    fn handle_key_events(&mut self, key_event: KeyEvent, config: &mut Config) -> PageEvent {
         let menu_option = &MenuOption::VARIANTS[self.menu_state.current_option];
         match (menu_option, key_event.code) {
             (_, KeyCode::Esc | KeyCode::Char('q')) => return PageEvent::QuitApp,
@@ -53,7 +53,7 @@ impl IPage for Homepage {
                 return PageEvent::Navigate(StudyPage::default().into());
             }
             (MenuOption::Configure, KeyCode::Enter | KeyCode::Char(' ')) => {
-                return PageEvent::Navigate(ConfigPage::default().into());
+                return PageEvent::Navigate(ConfigPage::from(config.clone()).into());
             }
             (_, KeyCode::Right | KeyCode::Down) => {
                 self.menu_state.next_option(MenuOption::COUNT - 1);
