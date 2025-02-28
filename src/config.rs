@@ -1,5 +1,17 @@
 use crate::models;
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::LazyLock};
+
+static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
+    let config_folder = dirs::config_dir()
+        .expect("Config folder for your OS not found")
+        .join(env!("CARGO_PKG_NAME"));
+
+    if !config_folder.exists() {
+        std::fs::create_dir_all(&config_folder).expect("Could not create config folder");
+    }
+
+    config_folder.join("config.toml")
+});
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -16,8 +28,7 @@ pub struct Config {
 
 impl Default for Config {
     fn default() -> Self {
-        let config_path = Self::get_config_path();
-        Config::parse_from_path(&config_path).unwrap_or_else(|_| {
+        Config::parse_from_path(&CONFIG_PATH).unwrap_or_else(|_| {
             let default_config = Config {
                 writing_system: WritingSystem::default(),
             };
@@ -35,18 +46,7 @@ impl Config {
 
     pub fn save(&self) -> Result<(), ConfigError> {
         let toml = toml::to_string_pretty(&self).map_err(ConfigError::SerializationError)?;
-        std::fs::write(Self::get_config_path(), toml).map_err(ConfigError::FailedToSave)
-    }
-
-    fn get_config_path() -> PathBuf {
-        let config_folder = dirs::config_dir()
-            .expect("Config folder for your OS not found")
-            .join(env!("CARGO_PKG_NAME"));
-        if !config_folder.exists() {
-            std::fs::create_dir_all(&config_folder).expect("Could not create config folder");
-        }
-
-        config_folder.join("config.toml")
+        std::fs::write(&*CONFIG_PATH, toml).map_err(ConfigError::FailedToSave)
     }
 }
 
