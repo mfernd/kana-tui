@@ -23,6 +23,7 @@ pub enum ConfigError {
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct Config {
+    pub study_bold_kana: bool,
     pub writing_system: WritingSystem,
 }
 
@@ -30,6 +31,7 @@ impl Default for Config {
     fn default() -> Self {
         Config::parse_from_path(&CONFIG_PATH).unwrap_or_else(|_| {
             let default_config = Config {
+                study_bold_kana: true,
                 writing_system: WritingSystem::default(),
             };
             default_config.save().expect("Could not save config");
