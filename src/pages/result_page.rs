@@ -1,5 +1,7 @@
+use super::Homepage;
 use crate::{
-    app::{IPage, Page, ReturnedPage},
+    app::{IPage, PageEvent},
+    config::Config,
     models::{answer::AnswerResult, kana::KanaRepresentation},
 };
 use crossterm::event::KeyEvent;
@@ -13,14 +15,13 @@ use ratatui::{
 
 #[derive(Debug, Clone)]
 pub struct ResultPage {
-    representation: KanaRepresentation,
     good_answers_count: usize,
     wrong_answers_count: usize,
     total_elapsed_time: u128,
 }
 
 impl IPage for ResultPage {
-    fn render(&mut self, frame: &mut Frame, main_area: Rect) {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect, config: &Config) {
         let [area_top, area_middle, area_bottom] = Layout::vertical([
             Constraint::Length(3),
             Constraint::Fill(1),
@@ -31,12 +32,13 @@ impl IPage for ResultPage {
         let congratulations_line = Line::from("You finished! \u{1F44F}").bold().centered();
         frame.render_widget(congratulations_line, area_top);
 
+        let kana_representation = KanaRepresentation::from(config.writing_system.clone());
         let kanas_count = self.good_answers_count + self.wrong_answers_count;
         let correct_percent = (self.good_answers_count as f64 / kanas_count as f64) * 100_f64;
         let kanas_count_line = Line::from(Vec::from([
             "You have completed your study plan of ".to_span(),
             kanas_count.to_span().bold(),
-            Span::from(format!(" {}(s) in ", self.representation)),
+            Span::from(format!(" {}(s) in ", kana_representation)),
             self.format_time().bold(),
             ".".to_span(),
         ]));
@@ -70,8 +72,8 @@ impl IPage for ResultPage {
         frame.render_widget(info, area_bottom);
     }
 
-    fn handle_key_events(&mut self, _: KeyEvent) -> ReturnedPage {
-        Page::go_home().call()
+    fn handle_key_events(&mut self, _: KeyEvent, _: &mut Config) -> PageEvent {
+        PageEvent::Navigate(Homepage::default().into())
     }
 }
 
@@ -94,7 +96,6 @@ impl From<super::study_page::StudyPage> for ResultPage {
             total_elapsed_time: value.total_elapsed_time_ms(),
             good_answers_count: value.get_count_by_result(&AnswerResult::Good),
             wrong_answers_count: value.get_count_by_result(&AnswerResult::Wrong),
-            representation: value.representation,
         }
     }
 }

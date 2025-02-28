@@ -14,8 +14,10 @@ kana-tui
 
 - [x] Study kanas and get your results (goods/wrongs) at the end
 - [ ] Customize your study (choose your kanas)
+  - [x] Choose between hiragana / katakana
+  - [ ] Fine-grained customization
 - [x] Timer
-- [ ] Stats
+- [ ] Stats/History
 - [ ] Study some words from JLPT?
 
 ## Credits

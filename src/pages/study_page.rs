@@ -1,5 +1,7 @@
+use super::{Homepage, ResultPage};
 use crate::{
-    app::{IPage, Page, ReturnedPage},
+    app::{IPage, PageEvent},
+    config::Config,
     models::{
         answer::{AnswerResult, ValidateAnswer},
         kana::{Kana, KanaRepresentation},
@@ -19,7 +21,6 @@ use tui_prompts::{Prompt, State, TextPrompt, TextState};
 
 #[derive(Debug, Clone)]
 pub struct StudyPage {
-    pub representation: KanaRepresentation,
     pub kanas: Vec<Kana>,
     total_kanas: usize,
     pub answers: Vec<(Kana, AnswerResult)>,
@@ -35,7 +36,7 @@ pub struct StudyPage {
 }
 
 impl IPage for StudyPage {
-    fn render(&mut self, frame: &mut Frame, main_area: Rect) {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect, config: &Config) {
         let [timer_area, kana_area, indication_area, input_area, progress_area] =
             Layout::vertical([
                 Constraint::Length(3),
@@ -49,12 +50,16 @@ impl IPage for StudyPage {
         let timer = Line::from(self.format_timer()).dim().centered();
         frame.render_widget(timer, timer_area.inner(Margin::new(0, 1)));
 
-        let kana_title = Line::from(match self.representation {
-            KanaRepresentation::Hiragana => self.current_kana.to_hiragana(),
-            KanaRepresentation::Katakana => self.current_kana.to_katakana(),
-        })
-        .bold()
+        let mut kana_title = Line::from(
+            match KanaRepresentation::from(config.writing_system.clone()) {
+                KanaRepresentation::Hiragana => self.current_kana.to_hiragana(),
+                KanaRepresentation::Katakana => self.current_kana.to_katakana(),
+            },
+        )
         .centered();
+        if config.study_bold_kana {
+            kana_title = kana_title.bold();
+        }
         frame.render_widget(
             kana_title,
             tui::flex(
@@ -101,9 +106,9 @@ impl IPage for StudyPage {
         }
     }
 
-    fn handle_key_events(&mut self, key_event: KeyEvent) -> ReturnedPage {
+    fn handle_key_events(&mut self, key_event: KeyEvent, _: &mut Config) -> PageEvent {
         if !self.is_paused && key_event.code == KeyCode::Esc {
-            return Page::go_home().call();
+            return PageEvent::Navigate(Homepage::default().into());
         }
 
         if self.is_paused
@@ -114,7 +119,7 @@ impl IPage for StudyPage {
             self.is_paused = !self.is_paused;
             self.reset_timer();
             // early return to prevent all other events
-            return self.go_same_page();
+            return PageEvent::Nothing;
         }
 
         // handle keyboard events
@@ -124,7 +129,7 @@ impl IPage for StudyPage {
                     self.push_good_answer();
                     if !self.next_kana() {
                         self.finish_study_hook();
-                        return Page::go_result().page(self.clone().into()).call();
+                        return PageEvent::Navigate(ResultPage::from(self.clone()).into());
                     }
                 } else {
                     self.indication = Some(Indication::WrongAnswer);
@@ -137,7 +142,7 @@ impl IPage for StudyPage {
                 if self.indication.eq(&help) {
                     if !self.next_kana() {
                         self.finish_study_hook();
-                        return Page::go_result().page(self.clone().into()).call();
+                        return PageEvent::Navigate(ResultPage::from(self.clone()).into());
                     }
                 } else {
                     self.indication = help;
@@ -147,7 +152,7 @@ impl IPage for StudyPage {
             _ => self.user_input.handle_key_event(key_event),
         };
 
-        self.go_same_page()
+        PageEvent::Nothing
     }
 }
 
@@ -183,10 +188,6 @@ impl StudyPage {
         }
         self.answers
             .push((self.current_kana.clone(), AnswerResult::Wrong));
-    }
-
-    fn go_same_page(&self) -> ReturnedPage {
-        Page::go_study().page(self.clone()).call()
     }
 
     fn finish_study_hook(&mut self) {
@@ -236,7 +237,6 @@ impl Default for StudyPage {
         let total_kanas = kanas.len();
         let first_kana = kanas.pop().unwrap(); // panic should not happen
         Self {
-            representation: KanaRepresentation::Hiragana,
             kanas,
             total_kanas,
             current_kana: first_kana,

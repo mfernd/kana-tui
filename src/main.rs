@@ -1,5 +1,6 @@
 use kana_tui::{
     app::App,
+    config::Config,
     event::{Event, EventHandler},
     handler::handle_key_events,
     tui::Tui,
@@ -9,6 +10,7 @@ use std::io;
 
 #[tokio::main]
 async fn main() -> kana_tui::AppResult<()> {
+    let mut config = Config::default();
     let mut app = App::new();
 
     let backend = CrosstermBackend::new(io::stdout());
@@ -18,10 +20,10 @@ async fn main() -> kana_tui::AppResult<()> {
     tui.init()?;
 
     while app.running {
-        tui.draw(&mut app)?;
+        tui.draw(&mut app, &config)?;
         match tui.events.next().await? {
             Event::Tick => app.tick(),
-            Event::Key(key_event) => handle_key_events(key_event, &mut app)?,
+            Event::Key(key_event) => handle_key_events(key_event, &mut app, &mut config)?,
             _ => {}
         }
     }
