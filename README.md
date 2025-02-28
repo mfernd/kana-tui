@@ -17,7 +17,8 @@ kana-tui
   - [x] Choose between hiragana / katakana
   - [ ] Fine-grained customization
 - [x] Timer
-- [ ] Stats/History
+- [ ] History
+- [ ] Stats
 - [ ] Study some words from JLPT?
 
 ## Credits
