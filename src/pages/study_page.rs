@@ -21,7 +21,6 @@ use tui_prompts::{Prompt, State, TextPrompt, TextState};
 
 #[derive(Debug, Clone)]
 pub struct StudyPage {
-    pub representation: KanaRepresentation,
     pub kanas: Vec<Kana>,
     total_kanas: usize,
     pub answers: Vec<(Kana, AnswerResult)>,
@@ -37,7 +36,7 @@ pub struct StudyPage {
 }
 
 impl IPage for StudyPage {
-    fn render(&mut self, frame: &mut Frame, main_area: Rect, _: &Config) {
+    fn render(&mut self, frame: &mut Frame, main_area: Rect, config: &Config) {
         let [timer_area, kana_area, indication_area, input_area, progress_area] =
             Layout::vertical([
                 Constraint::Length(3),
@@ -51,12 +50,16 @@ impl IPage for StudyPage {
         let timer = Line::from(self.format_timer()).dim().centered();
         frame.render_widget(timer, timer_area.inner(Margin::new(0, 1)));
 
-        let kana_title = Line::from(match self.representation {
-            KanaRepresentation::Hiragana => self.current_kana.to_hiragana(),
-            KanaRepresentation::Katakana => self.current_kana.to_katakana(),
-        })
-        .bold()
+        let mut kana_title = Line::from(
+            match KanaRepresentation::from(config.writing_system.clone()) {
+                KanaRepresentation::Hiragana => self.current_kana.to_hiragana(),
+                KanaRepresentation::Katakana => self.current_kana.to_katakana(),
+            },
+        )
         .centered();
+        if config.study_bold_kana {
+            kana_title = kana_title.bold();
+        }
         frame.render_widget(
             kana_title,
             tui::flex(
@@ -234,7 +237,6 @@ impl Default for StudyPage {
         let total_kanas = kanas.len();
         let first_kana = kanas.pop().unwrap(); // panic should not happen
         Self {
-            representation: KanaRepresentation::Hiragana,
             kanas,
             total_kanas,
             current_kana: first_kana,
